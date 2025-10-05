@@ -1,4 +1,4 @@
-import { PageEditor } from '@/components/editor/PageEditor'
+import { PuckEditor } from '@/components/editor/PuckEditor'
 import { notFound } from 'next/navigation'
 
 export const metadata = {
@@ -20,5 +20,5 @@ export default async function EditorPage({ params }: PageProps) {
     notFound()
   }
 
-  return <PageEditor funnelId={funnelId} pageId={pageId} />
+  return <PuckEditor funnelId={funnelId} pageId={pageId} />
 }

@@ -343,3 +343,129 @@ model Media {
   @@map("media")
 }
 
+model MembershipSite {
+  id          String   @id @default(cuid())
+  teamId      String
+  name        String
+  slug        String   @unique
+  description String?
+  settings    Json?    // Access rules, drip content settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tiers       MembershipTier[]
+  content     MembershipContent[]
+
+  @@index([teamId])
+  @@map("membership_sites")
+}
+
+model MembershipTier {
+  id          String         @id @default(cuid())
+  siteId      String
+  name        String
+  description String?
+  price       Decimal        @db.Decimal(10, 2)
+  interval    String         // monthly, yearly, lifetime
+  features    Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  site        MembershipSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  members     MembershipMember[]
+
+  @@index([siteId])
+  @@map("membership_tiers")
+}
+
+model MembershipMember {
+  id        String         @id @default(cuid())
+  tierId    String
+  userId    String
+  status    String         @default("active") // active, expired, canceled
+  expiresAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  tier      MembershipTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@unique([tierId, userId])
+  @@index([tierId])
+  @@index([userId])
+  @@map("membership_members")
+}
+
+model MembershipContent {
+  id          String         @id @default(cuid())
+  siteId      String
+  title       String
+  slug        String
+  content     String         @db.Text
+  type        String         // lesson, video, download
+  order       Int            @default(0)
+  isDrip      Boolean        @default(false)
+  dripDays    Int?
+  requiredTiers Json?        // Array of tier IDs that can access
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  site        MembershipSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+  @@map("membership_content")
+}
+
+model BlogPost {
+  id              String   @id @default(cuid())
+  teamId          String
+  title           String
+  slug            String   @unique
+  content         String   @db.Text
+  excerpt         String?
+  featuredImage   String?
+  status          String   @default("draft") // draft, published
+  publishedAt     DateTime?
+  metaTitle       String?
+  metaDescription String?
+  tags            String[]
+  categories      String[]
+  authorId        String?
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([teamId])
+  @@index([slug])
+  @@index([status])
+  @@map("blog_posts")
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  teamId    String
+  name      String
+  subject   String
+  content   String   @db.Text
+  type      String   // welcome, abandoned_cart, purchase_confirmation, etc.
+  variables Json?    // Available template variables
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
+  @@map("email_templates")
+}
+
+model EmailLog {
+  id         String   @id @default(cuid())
+  to         String
+  subject    String
+  status     String   // sent, failed, bounced, opened, clicked
+  provider   String   // resend, sendgrid, etc.
+  providerId String?
+  error      String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([to])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+

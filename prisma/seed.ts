@@ -5,63 +5,77 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Create sample funnels
-  const funnel1 = await prisma.funnel.create({
-    data: {
-      name: 'E-commerce Sales Funnel',
-      description: 'Complete sales funnel for online products',
-      type: 'sales',
-      status: 'active',
-      userId: 'temp-user-id',
-    },
+  // Create or find a sample team
+  let team = await prisma.team.findUnique({
+    where: { slug: 'default-team' },
   })
 
-  const funnel2 = await prisma.funnel.create({
-    data: {
-      name: 'Lead Generation Funnel',
-      description: 'Capture leads and nurture prospects',
-      type: 'lead',
-      status: 'draft',
-      userId: 'temp-user-id',
-    },
+  if (!team) {
+    team = await prisma.team.create({
+      data: {
+        name: 'Default Team',
+        slug: 'default-team',
+      },
+    })
+  }
+
+  // Create sample funnels
+  let funnel1 = await prisma.funnel.findUnique({
+    where: { slug: 'ecommerce-sales-funnel' },
   })
+
+  if (!funnel1) {
+    funnel1 = await prisma.funnel.create({
+      data: {
+        name: 'E-commerce Sales Funnel',
+        description: 'Complete sales funnel for online products',
+        status: 'active',
+        slug: 'ecommerce-sales-funnel',
+        teamId: team.id,
+      },
+    })
+  }
+
+  let funnel2 = await prisma.funnel.findUnique({
+    where: { slug: 'lead-generation-funnel' },
+  })
+
+  if (!funnel2) {
+    funnel2 = await prisma.funnel.create({
+      data: {
+        name: 'Lead Generation Funnel',
+        description: 'Capture leads and nurture prospects',
+        status: 'draft',
+        slug: 'lead-generation-funnel',
+        teamId: team.id,
+      },
+    })
+  }
 
   // Create sample pages for funnel1
   await prisma.page.createMany({
     data: [
       {
         name: 'Landing Page',
+        slug: 'landing-page',
+        path: '/landing',
         type: 'landing',
-        content: {
-          title: 'Welcome to Our Product',
-          subtitle: 'The best solution for your needs',
-          cta: 'Get Started Now',
-        },
-        order: 1,
         funnelId: funnel1.id,
         status: 'published',
       },
       {
         name: 'Sales Page',
+        slug: 'sales-page',
+        path: '/sales',
         type: 'sales',
-        content: {
-          title: 'Why Choose Our Product?',
-          subtitle: 'See what makes us different',
-          cta: 'Buy Now',
-        },
-        order: 2,
         funnelId: funnel1.id,
         status: 'published',
       },
       {
         name: 'Checkout Page',
+        slug: 'checkout-page',
+        path: '/checkout',
         type: 'checkout',
-        content: {
-          title: 'Complete Your Purchase',
-          subtitle: 'Secure checkout process',
-          cta: 'Pay Now',
-        },
-        order: 3,
         funnelId: funnel1.id,
         status: 'published',
       },
@@ -73,25 +87,17 @@ async function main() {
     data: [
       {
         name: 'Lead Capture Page',
+        slug: 'lead-capture-page',
+        path: '/lead-capture',
         type: 'landing',
-        content: {
-          title: 'Get Your Free Guide',
-          subtitle: 'Download our comprehensive guide',
-          cta: 'Download Now',
-        },
-        order: 1,
         funnelId: funnel2.id,
         status: 'draft',
       },
       {
         name: 'Thank You Page',
+        slug: 'thank-you-page',
+        path: '/thank-you',
         type: 'thankyou',
-        content: {
-          title: 'Thank You!',
-          subtitle: 'Check your email for the download link',
-          cta: 'Continue',
-        },
-        order: 2,
         funnelId: funnel2.id,
         status: 'draft',
       },

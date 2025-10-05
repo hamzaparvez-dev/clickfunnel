@@ -51,7 +51,7 @@ export function DashboardContent() {
           <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your funnels.</p>
         </div>
         <Link
-          href="/funnels"
+          href="/templates"
           className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
         >
           <FiPlus className="w-4 h-4" />
@@ -146,7 +146,7 @@ export function DashboardContent() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">No funnels yet</h3>
               <p className="text-gray-600 mb-4">Get started by creating your first marketing funnel.</p>
               <Link
-                href="/funnels"
+                href="/templates"
                 className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center space-x-2"
               >
                 <FiPlus className="w-4 h-4" />

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { useApp } from '@/lib/context/AppContext'
 import { FiPlus, FiEdit3, FiTrash2, FiEye, FiSettings, FiArrowDown, FiFileText, FiShoppingCart, FiGift, FiArrowLeft } from 'react-icons/fi'
 
