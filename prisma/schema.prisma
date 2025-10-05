@@ -1,0 +1,345 @@
+// Prisma Schema for ClickFunnels Clone
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  firebaseUid   String         @unique
+  role          String         @default("user")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  teams         TeamMember[]
+  subscriptions Subscription[]
+  orders        Order[]
+  leads         Lead[]
+
+  @@map("users")
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  members   TeamMember[]
+  funnels   Funnel[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      String   @default("member") // owner, admin, editor, viewer
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@map("team_members")
+}
+
+model Funnel {
+  id             String   @id @default(cuid())
+  teamId         String
+  name           String
+  slug           String   @unique
+  description    String?
+  status         String   @default("draft") // draft, active, paused
+  domainSettings Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  pages          Page[]
+  leads          Lead[]
+  orders         Order[]
+  analytics      FunnelAnalytics[]
+
+  @@index([teamId])
+  @@map("funnels")
+}
+
+model Page {
+  id                   String         @id @default(cuid())
+  funnelId             String
+  name                 String
+  slug                 String
+  path                 String
+  type                 String         @default("landing") // landing, sales, checkout, upsell, thankyou
+  publishedRevisionId  String?
+  metaTitle            String?
+  metaDescription      String?
+  customCSS            String?
+  customJS             String?
+  status               String         @default("draft")
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  funnel               Funnel         @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  revisions            PageRevision[]
+  abTests              ABTest[]
+  publishedRevision    PageRevision?  @relation("PublishedRevision", fields: [publishedRevisionId], references: [id])
+  leads                Lead[]
+  pageViews            PageView[]
+
+  @@unique([funnelId, slug])
+  @@index([funnelId])
+  @@map("pages")
+}
+
+model PageRevision {
+  id              String   @id @default(cuid())
+  pageId          String
+  content         Json     // Full page structure as JSON
+  meta            Json?    // Additional metadata
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  page            Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  publishedPages  Page[]   @relation("PublishedRevision")
+
+  @@index([pageId])
+  @@map("page_revisions")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  thumbnail   String?
+  content     Json     // Page structure
+  tags        String[]
+  isPremium   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("templates")
+}
+
+model Lead {
+  id         String   @id @default(cuid())
+  funnelId   String
+  pageId     String?
+  userId     String?
+  email      String
+  data       Json     // Form data
+  ip         String?
+  referrer   String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  funnel     Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  page       Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([funnelId])
+  @@index([email])
+  @@map("leads")
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  userId            String?
+  funnelId          String?
+  stripeSessionId   String?  @unique
+  stripePaymentId   String?  @unique
+  customerEmail     String
+  customerName      String?
+  amount            Decimal  @db.Decimal(10, 2)
+  currency          String   @default("usd")
+  status            String   @default("pending") // pending, completed, failed, refunded
+  items             Json     // Order items
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  funnel            Funnel?  @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([funnelId])
+  @@index([stripeSessionId])
+  @@map("orders")
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String
+  stripeSubscriptionId String   @unique
+  stripeCustomerId     String
+  stripePriceId        String
+  status               String   // active, canceled, past_due, trialing
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@map("subscriptions")
+}
+
+model ABTest {
+  id            String   @id @default(cuid())
+  pageId        String
+  name          String
+  status        String   @default("draft") // draft, running, completed, paused
+  variants      Json     // Array of variant configurations
+  winnerVariant String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  stats         ABTestStat[]
+
+  @@index([pageId])
+  @@map("ab_tests")
+}
+
+model ABTestStat {
+  id          String   @id @default(cuid())
+  testId      String
+  variant     String
+  impressions Int      @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0) @db.Decimal(10, 2)
+  date        DateTime @default(now())
+  test        ABTest   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, variant, date])
+  @@index([testId])
+  @@map("ab_test_stats")
+}
+
+model FunnelAnalytics {
+  id          String   @id @default(cuid())
+  funnelId    String
+  date        DateTime
+  visitors    Int      @default(0)
+  leads       Int      @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0) @db.Decimal(10, 2)
+  funnel      Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, date])
+  @@index([funnelId])
+  @@index([date])
+  @@map("funnel_analytics")
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  pageId    String
+  sessionId String
+  ip        String?
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([sessionId])
+  @@map("page_views")
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  teamId    String
+  url       String
+  secret    String
+  events    String[] // Array of event names to subscribe to
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  logs      WebhookLog[]
+
+  @@index([teamId])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  response   String?
+  statusCode Int?
+  success    Boolean
+  createdAt  DateTime @default(now())
+  webhook    Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([createdAt])
+  @@map("webhook_logs")
+}
+
+model EmailSequence {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String   // form_submit, purchase, page_visit
+  status      String   @default("active")
+  steps       Json     // Array of email steps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  subscribers EmailSubscriber[]
+
+  @@map("email_sequences")
+}
+
+model EmailSubscriber {
+  id         String        @id @default(cuid())
+  sequenceId String
+  email      String
+  status     String        @default("active") // active, completed, unsubscribed
+  currentStep Int          @default(0)
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  sequence   EmailSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@index([sequenceId])
+  @@index([email])
+  @@map("email_subscribers")
+}
+
+model Domain {
+  id         String   @id @default(cuid())
+  teamId     String
+  domain     String   @unique
+  verified   Boolean  @default(false)
+  sslEnabled Boolean  @default(false)
+  dnsToken   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([teamId])
+  @@map("domains")
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  teamId    String
+  filename  String
+  url       String
+  size      Int
+  mimeType  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([teamId])
+  @@map("media")
+}
+
