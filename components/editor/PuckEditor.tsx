@@ -326,21 +326,83 @@ const config = {
     },
     ImageBlock: {
       fields: {
-        url: { type: 'text' as const },
-        alt: { type: 'text' as const },
+        url: { 
+          type: 'custom' as const,
+          render: ({ value, onChange }: any) => {
+            const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+              const file = e.target.files?.[0]
+              if (file) {
+                // Convert to base64 for local storage
+                const reader = new FileReader()
+                reader.onloadend = () => {
+                  onChange(reader.result as string)
+                }
+                reader.readAsDataURL(file)
+              }
+            }
+
+            return (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image URL or Upload
+                  </label>
+                  <input
+                    type="text"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="relative">
+                  <label className="block">
+                    <span className="sr-only">Choose file</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </label>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Upload from computer or paste URL above
+                  </p>
+                </div>
+                {value && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                    <img 
+                      src={value} 
+                      alt="Preview" 
+                      className="max-w-full h-auto rounded-md border border-gray-200"
+                      style={{ maxHeight: '200px' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          }
+        },
+        alt: { 
+          type: 'text' as const,
+          label: 'Alt Text (for accessibility)',
+        },
         width: {
           type: 'select' as const,
+          label: 'Image Width',
           options: [
-            { label: 'Small', value: 'max-w-sm' },
-            { label: 'Medium', value: 'max-w-md' },
-            { label: 'Large', value: 'max-w-2xl' },
-            { label: 'Full', value: 'w-full' },
+            { label: 'Small (384px)', value: 'max-w-sm' },
+            { label: 'Medium (448px)', value: 'max-w-md' },
+            { label: 'Large (672px)', value: 'max-w-2xl' },
+            { label: 'Extra Large (896px)', value: 'max-w-4xl' },
+            { label: 'Full Width', value: 'w-full' },
           ],
         },
       },
       defaultProps: {
-        url: 'https://via.placeholder.com/800x400',
-        alt: 'Placeholder image',
+        url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800',
+        alt: 'Professional image',
         width: 'max-w-2xl',
       },
       render: ({ url, alt, width }: any) => {
@@ -400,13 +462,21 @@ export function PuckEditor({ funnelId, pageId }: { funnelId: string; pageId: str
   useEffect(() => {
     if (page?.content) {
       try {
+        console.log('Loading page content:', page.content)
         const parsed = typeof page.content === 'string' ? JSON.parse(page.content) : page.content
-        if (parsed.content || parsed.root) {
+        console.log('Parsed content:', parsed)
+        if (parsed && (parsed.content || parsed.root)) {
           setData(parsed)
+          console.log('Page data loaded successfully with', parsed.content?.length || 0, 'components')
+        } else {
+          console.log('No valid content found, using empty data')
         }
       } catch (e) {
+        console.error('Error parsing page content:', e)
         console.log('Using default empty data')
       }
+    } else {
+      console.log('No page content available yet')
     }
   }, [page])
 
@@ -427,23 +497,120 @@ export function PuckEditor({ funnelId, pageId }: { funnelId: string; pageId: str
 
   const handlePreview = () => {
     // Open preview in new window
-    const previewWindow = window.open('', '_blank')
-    if (previewWindow) {
-      previewWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <script src="https://cdn.tailwindcss.com"></script>
-            <title>Preview - ${page?.name}</title>
-          </head>
-          <body class="bg-white">
-            <div id="preview-root"></div>
-          </body>
-        </html>
-      `)
-      previewWindow.document.close()
+    const previewWindow = window.open('', '_blank', 'width=1200,height=800')
+    if (!previewWindow) return
+
+    // Render Puck components to HTML
+    let html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <title>Preview - ${page?.name}</title>
+          <style>body { margin: 0; padding: 0; }</style>
+        </head>
+        <body class="bg-white">
+    `
+    
+    // Render each component
+    if (data.content) {
+      data.content.forEach((component: any) => {
+        html += renderComponentToHTML(component)
+      })
+    }
+    
+    html += '</body></html>'
+    
+    previewWindow.document.write(html)
+    previewWindow.document.close()
+  }
+
+  const renderComponentToHTML = (component: any): string => {
+    const { type, props } = component
+    
+    switch (type) {
+      case 'HeroSection':
+        return `
+          <section class="${props.backgroundColor} text-white py-24 px-6">
+            <div class="max-w-5xl mx-auto text-center">
+              <h1 class="text-6xl font-bold mb-6">${props.title}</h1>
+              <p class="text-2xl mb-10">${props.subtitle}</p>
+              <a href="${props.buttonLink}" class="bg-white text-indigo-600 px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 inline-block">${props.buttonText}</a>
+            </div>
+          </section>
+        `
+      case 'FeatureGrid':
+        const featuresHTML = props.features.map((f: any) => `
+          <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <div class="text-4xl mb-4">${f.icon}</div>
+            <h3 class="text-2xl font-bold mb-3">${f.title}</h3>
+            <p class="text-gray-600">${f.description}</p>
+          </div>
+        `).join('')
+        return `
+          <section class="py-20 px-6 bg-gray-50">
+            <div class="max-w-7xl mx-auto">
+              ${props.title ? `<div class="text-center mb-16"><h2 class="text-5xl font-bold mb-4">${props.title}</h2><p class="text-xl text-gray-600">${props.subtitle}</p></div>` : ''}
+              <div class="grid md:grid-cols-3 gap-8">${featuresHTML}</div>
+            </div>
+          </section>
+        `
+      case 'PricingSection':
+        const plansHTML = props.plans.map((plan: any) => `
+          <div class="${plan.popular === 'yes' ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white transform scale-105' : 'bg-gray-800 text-white'} rounded-2xl p-8">
+            ${plan.popular === 'yes' ? '<div class="text-center mb-4"><span class="bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">MOST POPULAR</span></div>' : ''}
+            <h3 class="text-2xl font-bold mb-2">${plan.name}</h3>
+            <div class="text-5xl font-bold mb-6">${plan.price}<span class="text-xl">/mo</span></div>
+            <ul class="space-y-3 mb-8">
+              ${plan.features.split('\n').map((f: string) => `<li class="flex items-center gap-2"><span class="text-green-400">✓</span> ${f}</li>`).join('')}
+            </ul>
+            <button class="w-full bg-white text-indigo-600 py-4 rounded-xl font-bold hover:bg-gray-100">Get Started</button>
+          </div>
+        `).join('')
+        return `
+          <section class="py-20 px-6 bg-gray-900 text-white">
+            <div class="max-w-7xl mx-auto">
+              <div class="text-center mb-16"><h2 class="text-5xl font-bold mb-4">${props.title}</h2><p class="text-xl text-gray-400">${props.subtitle}</p></div>
+              <div class="grid md:grid-cols-3 gap-8">${plansHTML}</div>
+            </div>
+          </section>
+        `
+      case 'FormSection':
+        return `
+          <section class="py-20 px-6 bg-gradient-to-br from-gray-50 to-gray-100">
+            <div class="max-w-xl mx-auto">
+              <div class="bg-white rounded-3xl shadow-2xl p-10">
+                <div class="text-center mb-8">
+                  <h2 class="text-3xl font-bold mb-3">${props.title}</h2>
+                  <p class="text-gray-600">${props.subtitle}</p>
+                </div>
+                <form class="space-y-4">
+                  <input type="text" placeholder="Your Name" class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none" />
+                  <input type="email" placeholder="Your Email" class="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none" />
+                  <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg">${props.buttonText}</button>
+                </form>
+              </div>
+            </div>
+          </section>
+        `
+      case 'HeadingBlock':
+        return `<div class="max-w-7xl mx-auto px-6"><h1 class="${props.size} font-bold mb-4" style="text-align: ${props.align}">${props.children}</h1></div>`
+      case 'TextBlock':
+        return `<div class="max-w-7xl mx-auto px-6"><p class="text-lg text-gray-700 mb-4" style="text-align: ${props.align}">${props.text}</p></div>`
+      case 'ButtonBlock':
+        const sizeClasses = { sm: 'px-4 py-2 text-sm', md: 'px-6 py-3 text-base', lg: 'px-8 py-4 text-lg' }
+        const variantClasses = { primary: 'bg-indigo-600 text-white hover:bg-indigo-700', secondary: 'bg-gray-600 text-white hover:bg-gray-700', outline: 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50' }
+        return `<div class="max-w-7xl mx-auto px-6 text-center mb-8"><a href="${props.href}" class="font-semibold rounded-lg inline-block ${sizeClasses[props.size as keyof typeof sizeClasses]} ${variantClasses[props.variant as keyof typeof variantClasses]}">${props.text}</a></div>`
+      case 'ImageBlock':
+        return `<div class="max-w-7xl mx-auto px-6"><div class="${props.width} mx-auto mb-8"><img src="${props.url}" alt="${props.alt}" class="w-full h-auto rounded-xl shadow-lg" /></div></div>`
+      case 'DividerBlock':
+        return `<div class="max-w-7xl mx-auto px-6"><hr class="my-8 border-gray-300 border-${props.style}" /></div>`
+      case 'SpacerBlock':
+        return `<div style="height: ${props.height}"></div>`
+      default:
+        return ''
     }
   }
 

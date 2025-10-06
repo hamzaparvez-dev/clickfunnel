@@ -4,6 +4,8 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 
 // Using localStorage for now (no API calls until database is set up)
 // This matches your original implementation
+// key required to load the page.
+const STORAGE_KEY = 'clickfunnels-clone-data'
 
 interface AppState {
   funnels: any[]
@@ -191,7 +193,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const updatePage = async (id: string, data: any) => {
+    console.log('Updating page:', id, 'with data:', data)
     dispatch({ type: 'UPDATE_PAGE', payload: { id, data } })
+    
+    // Persist to localStorage immediately
+    setTimeout(() => {
+      const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+      if (state.pages) {
+        const updatedPages = state.pages.map((p: any) =>
+          p.id === id ? { ...p, ...data } : p
+        )
+        state.pages = updatedPages
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        console.log('Page persisted to localStorage:', id)
+      }
+    }, 100)
   }
 
   const deletePage = async (id: string) => {
