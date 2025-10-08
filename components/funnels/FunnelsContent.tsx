@@ -46,20 +46,37 @@ export function FunnelsContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Funnels</h1>
-          <p className="text-gray-600 mt-1">Create and manage your marketing funnels</p>
+    <div className="min-h-screen bg-white">
+      {/* Breadcrumb */}
+      <div className="border-b border-gray-200 bg-white px-8 py-4">
+        <div className="flex items-center space-x-2 text-sm">
+          <FiTarget className="w-4 h-4 text-blue-600" />
+          <span className="text-gray-600 font-medium">FUNNELS</span>
         </div>
-        <Link
-          href="/templates"
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-        >
-          <FiPlus className="w-4 h-4" />
-          <span>Create Funnel</span>
-        </Link>
+      </div>
+
+      {/* Main Content */}
+      <div className="px-8 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">Funnels</h1>
+            <p className="text-gray-600 mt-1">Create and manage your marketing funnels</p>
+          </div>
+        <div className="flex items-center space-x-3">
+          <Link
+            href="/funnels/templates"
+            className="bg-white border-2 border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
+          >
+            Smart Funnel Builder
+          </Link>
+          <Link
+            href="/funnels/create"
+            className="bg-orange-400 text-white px-5 py-2.5 rounded-lg hover:bg-orange-500 transition-colors flex items-center space-x-2 font-semibold"
+          >
+            <span>Create Funnel</span>
+          </Link>
+        </div>
       </div>
 
       {/* Funnels Grid */}
@@ -129,8 +146,8 @@ export function FunnelsContent() {
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No funnels yet</h3>
           <p className="text-gray-600 mb-6">Create your first marketing funnel to get started</p>
           <Link
-            href="/templates"
-            className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center space-x-2"
+            href="/funnels/create"
+            className="bg-orange-400 hover:bg-orange-500 text-white px-6 py-3 rounded-lg transition-colors inline-flex items-center space-x-2 font-semibold"
           >
             <FiPlus className="w-5 h-5" />
             <span>Create Your First Funnel</span>
@@ -139,6 +156,7 @@ export function FunnelsContent() {
       )}
 
       {/* Create Funnel Modal (unused when routing to /templates) */}
+      </div>
     </div>
   )
 }

@@ -1,9 +1,9 @@
-import { PuckEditor } from '@/components/editor/PuckEditor'
+import { GrapesJSEditor } from '@/components/editor/GrapesJSEditor'
 import { notFound } from 'next/navigation'
 
 export const metadata = {
-  title: 'Page Editor | ClickFunnels Clone',
-  description: 'Build and customize your pages',
+  title: 'GrapesJS Editor | ClickFunnels Clone',
+  description: 'Professional drag & drop page builder powered by GrapesJS',
 }
 
 interface PageProps {
@@ -20,5 +20,5 @@ export default async function EditorPage({ params }: PageProps) {
     notFound()
   }
 
-  return <PuckEditor funnelId={funnelId} pageId={pageId} />
+  return <GrapesJSEditor funnelId={funnelId} pageId={pageId} />
 }

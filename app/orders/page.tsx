@@ -6,10 +6,6 @@ export const metadata = {
 }
 
 export default function OrdersPage() {
-  return (
-    <div className="p-6">
-      <OrdersContent />
-    </div>
-  )
+  return <OrdersContent />
 }
 

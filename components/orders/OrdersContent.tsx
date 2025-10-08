@@ -15,11 +15,21 @@ export function OrdersContent() {
   const completedOrders = orders.filter((o: any) => o.status === 'completed').length
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-        <p className="text-gray-600 mt-1">Manage and track all your orders</p>
+    <div className="min-h-screen bg-white">
+      {/* Breadcrumb */}
+      <div className="border-b border-gray-200 bg-white px-8 py-4">
+        <div className="flex items-center space-x-2 text-sm">
+          <FiShoppingBag className="w-4 h-4 text-blue-600" />
+          <span className="text-gray-600 font-medium">ORDERS</span>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="px-8 py-8 space-y-6">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900">Orders</h1>
+          <p className="text-gray-600 mt-1">Manage and track all your orders</p>
+        </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -140,6 +150,7 @@ export function OrdersContent() {
             <p className="text-gray-600">Orders will appear here once customers make purchases.</p>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

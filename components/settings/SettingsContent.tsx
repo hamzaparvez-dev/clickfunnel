@@ -16,11 +16,21 @@ export function SettingsContent() {
   ]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+    <div className="min-h-screen bg-white">
+      {/* Breadcrumb */}
+      <div className="border-b border-gray-200 bg-white px-8 py-4">
+        <div className="flex items-center space-x-2 text-sm">
+          <FiLock className="w-4 h-4 text-blue-600" />
+          <span className="text-gray-600 font-medium">WORKSPACE SETTINGS</span>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="px-8 py-8 space-y-6">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+        </div>
 
       <div className="flex gap-6">
         {/* Sidebar */}
@@ -128,6 +138,7 @@ export function SettingsContent() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

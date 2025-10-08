@@ -86,38 +86,84 @@ export function FunnelBuilderContent({ funnelId }: { funnelId: string }) {
 
   const handlePreviewPage = (pageId: string) => {
     const page = pages.find((p: any) => p.id === pageId)
-    if (!page) return
+    if (!page) {
+      alert('❌ Page not found')
+      return
+    }
 
     const previewWindow = window.open('', '_blank', 'width=1200,height=800')
-    if (!previewWindow) return
-
-    let html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <title>Preview - ${page.name}</title>
-          <style>body { margin: 0; padding: 0; }</style>
-        </head>
-        <body class="bg-white">
-    `
+    if (!previewWindow) {
+      alert('❌ Please allow popups to preview pages')
+      return
+    }
 
     try {
       const pageData = typeof page.content === 'string' ? JSON.parse(page.content) : page.content
-      if (pageData && pageData.content) {
+      
+      let htmlContent = ''
+      let cssContent = ''
+      
+      // Check if it's GrapesJS format (new)
+      if (pageData && (pageData.html || pageData.components)) {
+        console.log('✅ Preview: GrapesJS format detected')
+        htmlContent = pageData.html || ''
+        cssContent = pageData.css || ''
+      }
+      // Check if it's Puck format (old)
+      else if (pageData && pageData.content && Array.isArray(pageData.content)) {
+        console.log('🔄 Preview: Converting Puck format to HTML')
         pageData.content.forEach((component: any) => {
-          html += renderComponentToHTML(component)
+          htmlContent += renderComponentToHTML(component)
         })
       }
-    } catch (e) {
-      html += '<div class="flex items-center justify-center min-h-screen"><p class="text-xl text-gray-600">No content to preview yet. Click Edit to add content.</p></div>'
+      // Empty content
+      else {
+        console.log('⚠️ Preview: No content found')
+        htmlContent = '<div class="flex items-center justify-center min-h-screen bg-gray-50"><div class="text-center"><p class="text-2xl font-bold text-gray-900 mb-2">No content yet</p><p class="text-gray-600">Click Edit to start building your page</p></div></div>'
+      }
+      
+      const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview - ${page.name}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>${cssContent}</style>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
+  </style>
+</head>
+<body>
+  ${htmlContent}
+</body>
+</html>`
 
-    html += '</body></html>'
-    previewWindow.document.write(html)
-    previewWindow.document.close()
+      previewWindow.document.write(fullHTML)
+      previewWindow.document.close()
+    } catch (error) {
+      console.error('❌ Preview error:', error)
+      previewWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          </head>
+          <body class="flex items-center justify-center min-h-screen bg-gray-50">
+            <div class="text-center">
+              <p class="text-2xl font-bold text-red-600 mb-2">Preview Error</p>
+              <p class="text-gray-600">Failed to load page content</p>
+            </div>
+          </body>
+        </html>
+      `)
+      previewWindow.document.close()
+    }
   }
 
   const renderComponentToHTML = (component: any): string => {

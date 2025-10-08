@@ -6,10 +6,6 @@ export const metadata = {
 }
 
 export default function SettingsPage() {
-  return (
-    <div className="p-6">
-      <SettingsContent />
-    </div>
-  )
+  return <SettingsContent />
 }
 

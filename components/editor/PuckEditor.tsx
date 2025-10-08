@@ -6,6 +6,19 @@ import { useRouter } from 'next/navigation'
 import { useApp } from '@/lib/context/AppContext'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Save, Eye } from 'lucide-react'
+import {
+  Testimonial,
+  FAQ,
+  CountdownTimer,
+  StatsSection,
+  VideoSection,
+  ProgressBar,
+  GuaranteeBadge,
+  ComparisonTable,
+  SocialProof,
+  LogoCloud,
+  AlertBanner
+} from '@/components/editor/AdvancedComponents'
 
 // Define your components
 const config = {
@@ -449,6 +462,281 @@ const config = {
         return <div style={{ height }} />
       },
     },
+    Testimonial: {
+      fields: {
+        name: { type: 'text' as const },
+        role: { type: 'text' as const },
+        quote: { type: 'textarea' as const },
+        image: { type: 'text' as const },
+        rating: {
+          type: 'select' as const,
+          options: [
+            { label: '5 Stars', value: 5 },
+            { label: '4 Stars', value: 4 },
+            { label: '3 Stars', value: 3 },
+          ],
+        },
+        style: {
+          type: 'radio' as const,
+          options: [
+            { label: 'Card', value: 'card' },
+            { label: 'Quote', value: 'quote' },
+          ],
+        },
+      },
+      defaultProps: {
+        name: 'John Doe',
+        role: 'CEO, Company',
+        quote: 'This product completely transformed my business!',
+        image: 'https://ui-avatars.com/api/?name=John+Doe&size=200',
+        rating: 5,
+        style: 'card',
+      },
+      render: (props: any) => <Testimonial props={props} />,
+    },
+    FAQ: {
+      fields: {
+        title: { type: 'text' as const },
+        items: {
+          type: 'array' as const,
+          arrayFields: {
+            question: { type: 'text' as const },
+            answer: { type: 'textarea' as const },
+          },
+          defaultItemProps: {
+            question: 'How does it work?',
+            answer: 'Our system is designed to be simple and effective.',
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Frequently Asked Questions',
+        items: [
+          { question: 'How does it work?', answer: 'Our system is designed to be simple and effective.' },
+          { question: 'Is there a guarantee?', answer: 'Yes, we offer a 30-day money-back guarantee.' },
+        ],
+      },
+      render: (props: any) => <FAQ props={props} />,
+    },
+    CountdownTimer: {
+      fields: {
+        title: { type: 'text' as const },
+        backgroundColor: {
+          type: 'select' as const,
+          options: [
+            { label: 'Red', value: 'bg-red-600' },
+            { label: 'Orange', value: 'bg-orange-600' },
+            { label: 'Purple', value: 'bg-purple-600' },
+          ],
+        },
+      },
+      defaultProps: {
+        title: 'Limited Time Offer Ends In:',
+        backgroundColor: 'bg-red-600',
+      },
+      render: (props: any) => <CountdownTimer props={props} />,
+    },
+    StatsSection: {
+      fields: {
+        stats: {
+          type: 'array' as const,
+          arrayFields: {
+            number: { type: 'text' as const },
+            label: { type: 'text' as const },
+          },
+          defaultItemProps: {
+            number: '10K+',
+            label: 'Happy Customers',
+          },
+        },
+        backgroundColor: {
+          type: 'select' as const,
+          options: [
+            { label: 'Indigo', value: 'bg-indigo-600' },
+            { label: 'Blue', value: 'bg-blue-600' },
+            { label: 'Purple', value: 'bg-purple-600' },
+          ],
+        },
+      },
+      defaultProps: {
+        stats: [
+          { number: '10K+', label: 'Happy Customers' },
+          { number: '$50M+', label: 'Revenue Generated' },
+          { number: '99%', label: 'Satisfaction Rate' },
+        ],
+        backgroundColor: 'bg-indigo-600',
+      },
+      render: (props: any) => <StatsSection props={props} />,
+    },
+    VideoSection: {
+      fields: {
+        title: { type: 'text' as const },
+        subtitle: { type: 'textarea' as const },
+        videoUrl: { type: 'text' as const },
+      },
+      defaultProps: {
+        title: 'Watch This Video',
+        subtitle: 'Discover how our system works',
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      },
+      render: (props: any) => <VideoSection props={props} />,
+    },
+    ProgressBar: {
+      fields: {
+        title: { type: 'text' as const },
+        percentage: {
+          type: 'number' as const,
+          min: 0,
+          max: 100,
+        },
+        showPercentage: {
+          type: 'radio' as const,
+          options: [
+            { label: 'Show', value: true },
+            { label: 'Hide', value: false },
+          ],
+        },
+      },
+      defaultProps: {
+        title: 'Your Progress',
+        percentage: 75,
+        showPercentage: true,
+      },
+      render: (props: any) => <ProgressBar props={props} />,
+    },
+    GuaranteeBadge: {
+      fields: {
+        title: { type: 'text' as const },
+        description: { type: 'textarea' as const },
+        icon: { type: 'text' as const },
+        style: {
+          type: 'radio' as const,
+          options: [
+            { label: 'Badge', value: 'badge' },
+            { label: 'Banner', value: 'banner' },
+          ],
+        },
+      },
+      defaultProps: {
+        title: '30-Day Money Back Guarantee',
+        description: "If you're not satisfied, get a full refund. No questions asked.",
+        icon: '🛡️',
+        style: 'badge',
+      },
+      render: (props: any) => <GuaranteeBadge props={props} />,
+    },
+    ComparisonTable: {
+      fields: {
+        title: { type: 'text' as const },
+        plans: {
+          type: 'array' as const,
+          arrayFields: {
+            name: { type: 'text' as const },
+            price: { type: 'text' as const },
+            features: { type: 'textarea' as const },
+            highlighted: {
+              type: 'radio' as const,
+              options: [
+                { label: 'Yes', value: true },
+                { label: 'No', value: false },
+              ],
+            },
+          },
+          defaultItemProps: {
+            name: 'Basic',
+            price: '$29',
+            features: 'Feature 1\nFeature 2\nFeature 3',
+            highlighted: false,
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Choose Your Plan',
+        plans: [
+          { name: 'Basic', price: '$29', features: 'Feature 1\nFeature 2\nFeature 3', highlighted: false },
+          { name: 'Pro', price: '$99', features: 'All Basic\nFeature 4\nFeature 5\nFeature 6', highlighted: true },
+        ],
+      },
+      render: (props: any) => <ComparisonTable props={props} />,
+    },
+    SocialProof: {
+      fields: {
+        message: { type: 'text' as const },
+        type: {
+          type: 'select' as const,
+          options: [
+            { label: 'Viewers', value: 'viewers' },
+            { label: 'Sales', value: 'sales' },
+          ],
+        },
+        backgroundColor: {
+          type: 'select' as const,
+          options: [
+            { label: 'Orange', value: 'bg-orange-500' },
+            { label: 'Red', value: 'bg-red-500' },
+            { label: 'Green', value: 'bg-green-500' },
+          ],
+        },
+      },
+      defaultProps: {
+        message: '1,247 people are viewing this offer right now',
+        type: 'viewers',
+        backgroundColor: 'bg-orange-500',
+      },
+      render: (props: any) => <SocialProof props={props} />,
+    },
+    LogoCloud: {
+      fields: {
+        title: { type: 'text' as const },
+        logos: {
+          type: 'array' as const,
+          arrayFields: {
+            name: { type: 'text' as const },
+            url: { type: 'text' as const },
+          },
+          defaultItemProps: {
+            name: 'Company 1',
+            url: 'https://via.placeholder.com/150x50?text=Logo',
+          },
+        },
+      },
+      defaultProps: {
+        title: 'Trusted by leading companies',
+        logos: [
+          { name: 'Company 1', url: 'https://via.placeholder.com/150x50?text=Logo1' },
+          { name: 'Company 2', url: 'https://via.placeholder.com/150x50?text=Logo2' },
+          { name: 'Company 3', url: 'https://via.placeholder.com/150x50?text=Logo3' },
+        ],
+      },
+      render: (props: any) => <LogoCloud props={props} />,
+    },
+    AlertBanner: {
+      fields: {
+        message: { type: 'text' as const },
+        type: {
+          type: 'select' as const,
+          options: [
+            { label: 'Success', value: 'success' },
+            { label: 'Warning', value: 'warning' },
+            { label: 'Error', value: 'error' },
+            { label: 'Info', value: 'info' },
+          ],
+        },
+        dismissible: {
+          type: 'radio' as const,
+          options: [
+            { label: 'Yes', value: true },
+            { label: 'No', value: false },
+          ],
+        },
+      },
+      defaultProps: {
+        message: 'Limited time offer - Save 50% today!',
+        type: 'warning',
+        dismissible: true,
+      },
+      render: (props: any) => <AlertBanner props={props} />,
+    },
   },
 }
 
@@ -609,6 +897,212 @@ export function PuckEditor({ funnelId, pageId }: { funnelId: string; pageId: str
         return `<div class="max-w-7xl mx-auto px-6"><hr class="my-8 border-gray-300 border-${props.style}" /></div>`
       case 'SpacerBlock':
         return `<div style="height: ${props.height}"></div>`
+      case 'Testimonial':
+        const stars = Array.from({ length: 5 }, (_, i) => i < props.rating)
+        const starsHTML = stars.map(filled => `<span class="${filled ? 'text-yellow-400' : 'text-gray-300'}">★</span>`).join('')
+        if (props.style === 'quote') {
+          return `
+            <div class="bg-white p-8 rounded-2xl relative max-w-4xl mx-auto my-8">
+              <div class="text-6xl text-indigo-600 opacity-20 absolute top-4 left-4">"</div>
+              <p class="text-xl text-gray-700 italic mb-6 pl-12">${props.quote}</p>
+              <div class="flex items-center space-x-4">
+                <img src="${props.image}" alt="${props.name}" class="w-16 h-16 rounded-full object-cover" />
+                <div>
+                  <div class="font-bold text-gray-900">${props.name}</div>
+                  <div class="text-gray-600">${props.role}</div>
+                  <div class="flex space-x-1 mt-1">${starsHTML}</div>
+                </div>
+              </div>
+            </div>
+          `
+        }
+        return `
+          <div class="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto my-8">
+            <div class="flex items-center space-x-4 mb-4">
+              <img src="${props.image}" alt="${props.name}" class="w-20 h-20 rounded-full object-cover" />
+              <div>
+                <div class="font-bold text-xl text-gray-900">${props.name}</div>
+                <div class="text-gray-600">${props.role}</div>
+                <div class="flex space-x-1 mt-1">${starsHTML}</div>
+              </div>
+            </div>
+            <p class="text-gray-700 leading-relaxed">${props.quote}</p>
+          </div>
+        `
+      case 'FAQ':
+        const faqItems = props.items.map((item: any) => `
+          <details class="bg-white rounded-xl p-6 shadow-sm">
+            <summary class="font-semibold text-lg text-gray-900 cursor-pointer flex items-center justify-between">
+              ${item.question}
+              <span class="text-indigo-600 text-2xl">+</span>
+            </summary>
+            <p class="mt-4 text-gray-600">${item.answer}</p>
+          </details>
+        `).join('')
+        return `
+          <div class="bg-gray-50 py-16 px-6">
+            <div class="max-w-4xl mx-auto">
+              <h2 class="text-4xl font-bold text-center text-gray-900 mb-12">${props.title}</h2>
+              <div class="space-y-4">${faqItems}</div>
+            </div>
+          </div>
+        `
+      case 'CountdownTimer':
+        return `
+          <div class="${props.backgroundColor} text-white py-8 px-6">
+            <div class="max-w-4xl mx-auto text-center">
+              <h3 class="text-2xl font-bold mb-6">${props.title}</h3>
+              <div class="flex justify-center space-x-4">
+                <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4 min-w-[100px]">
+                  <div class="text-4xl font-bold">23</div>
+                  <div class="text-sm opacity-90">Hours</div>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4 min-w-[100px]">
+                  <div class="text-4xl font-bold">59</div>
+                  <div class="text-sm opacity-90">Minutes</div>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4 min-w-[100px]">
+                  <div class="text-4xl font-bold">45</div>
+                  <div class="text-sm opacity-90">Seconds</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      case 'StatsSection':
+        const statsHTML = props.stats.map((stat: any) => `
+          <div class="text-center">
+            <div class="text-5xl font-bold mb-2">${stat.number}</div>
+            <div class="text-lg opacity-90">${stat.label}</div>
+          </div>
+        `).join('')
+        return `
+          <div class="${props.backgroundColor} text-white py-16 px-6">
+            <div class="max-w-7xl mx-auto">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">${statsHTML}</div>
+            </div>
+          </div>
+        `
+      case 'VideoSection':
+        return `
+          <div class="bg-gray-900 text-white py-20 px-6">
+            <div class="max-w-5xl mx-auto">
+              <div class="text-center mb-12">
+                <h2 class="text-5xl font-bold mb-4">${props.title}</h2>
+                <p class="text-xl opacity-90">${props.subtitle}</p>
+              </div>
+              <div class="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl">
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                  <div class="text-center">
+                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                      </svg>
+                    </div>
+                    <p class="text-sm opacity-75">Click to play video</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      case 'ProgressBar':
+        return `
+          <div class="py-8 px-6">
+            <div class="max-w-3xl mx-auto">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-lg font-semibold text-gray-900">${props.title}</h3>
+                ${props.showPercentage ? `<span class="text-sm font-medium text-gray-600">${props.percentage}%</span>` : ''}
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div class="bg-green-500 h-full transition-all duration-500" style="width: ${props.percentage}%"></div>
+              </div>
+            </div>
+          </div>
+        `
+      case 'GuaranteeBadge':
+        if (props.style === 'banner') {
+          return `
+            <div class="bg-green-50 border-l-4 border-green-500 p-6 max-w-6xl mx-auto my-8">
+              <div class="flex items-center space-x-4">
+                <span class="text-5xl">${props.icon}</span>
+                <div>
+                  <h3 class="text-xl font-bold text-green-900">${props.title}</h3>
+                  <p class="text-green-700">${props.description}</p>
+                </div>
+              </div>
+            </div>
+          `
+        }
+        return `
+          <div class="flex justify-center py-8">
+            <div class="bg-white rounded-full shadow-lg px-8 py-4 flex items-center space-x-3 border-2 border-green-500">
+              <span class="text-3xl">${props.icon}</span>
+              <div>
+                <div class="font-bold text-gray-900">${props.title}</div>
+                <div class="text-sm text-gray-600">${props.description}</div>
+              </div>
+            </div>
+          </div>
+        `
+      case 'ComparisonTable':
+        const compPlansHTML = props.plans.map((plan: any) => `
+          <div class="${plan.highlighted ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white transform scale-105' : 'bg-white border-2 border-gray-200'} rounded-2xl p-8">
+            ${plan.highlighted ? '<div class="text-center mb-4"><span class="bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">BEST VALUE</span></div>' : ''}
+            <h3 class="text-2xl font-bold mb-2">${plan.name}</h3>
+            <div class="text-5xl font-bold mb-6">${plan.price}</div>
+            <ul class="space-y-3 mb-8">
+              ${plan.features.split('\n').map((f: string) => `<li class="flex items-center space-x-2"><span class="text-green-400">✓</span><span>${f}</span></li>`).join('')}
+            </ul>
+            <button class="w-full ${plan.highlighted ? 'bg-white text-indigo-600' : 'bg-indigo-600 text-white'} py-3 rounded-lg font-bold">Get Started</button>
+          </div>
+        `).join('')
+        return `
+          <div class="py-16 px-6">
+            <div class="max-w-6xl mx-auto">
+              <h2 class="text-4xl font-bold text-center text-gray-900 mb-12">${props.title}</h2>
+              <div class="grid md:grid-cols-2 gap-8">${compPlansHTML}</div>
+            </div>
+          </div>
+        `
+      case 'SocialProof':
+        return `
+          <div class="${props.backgroundColor} text-white py-3 px-6 text-center">
+            <div class="flex items-center justify-center space-x-2">
+              <span class="animate-pulse">🔥</span>
+              <span class="font-semibold">${props.message}</span>
+            </div>
+          </div>
+        `
+      case 'LogoCloud':
+        const logosHTML = props.logos.map((logo: any) => `
+          <div class="opacity-50 hover:opacity-100 transition-opacity">
+            <img src="${logo.url}" alt="${logo.name}" class="h-12 grayscale hover:grayscale-0" />
+          </div>
+        `).join('')
+        return `
+          <div class="bg-gray-100 py-12 px-6">
+            <div class="max-w-6xl mx-auto">
+              <h3 class="text-center text-gray-600 font-semibold mb-8">${props.title}</h3>
+              <div class="flex flex-wrap justify-center items-center gap-8">${logosHTML}</div>
+            </div>
+          </div>
+        `
+      case 'AlertBanner':
+        const alertColors: any = {
+          success: 'bg-green-100 border-green-500 text-green-900',
+          warning: 'bg-yellow-100 border-yellow-500 text-yellow-900',
+          error: 'bg-red-100 border-red-500 text-red-900',
+          info: 'bg-blue-100 border-blue-500 text-blue-900'
+        }
+        return `
+          <div class="${alertColors[props.type]} border-l-4 p-4">
+            <div class="flex items-center justify-between">
+              <p class="font-medium">${props.message}</p>
+              ${props.dismissible ? '<button class="text-xl opacity-50 hover:opacity-100">×</button>' : ''}
+            </div>
+          </div>
+        `
       default:
         return ''
     }

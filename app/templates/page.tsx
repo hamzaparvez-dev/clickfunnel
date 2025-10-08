@@ -8,10 +8,8 @@ export const metadata = {
 
 export default function TemplatesPage() {
   return (
-    <div className="p-6 space-y-6">
-      <Suspense fallback={<div>Loading templates...</div>}>
-        <TemplatesGallery />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>Loading templates...</div>}>
+      <TemplatesGallery />
+    </Suspense>
   )
 }

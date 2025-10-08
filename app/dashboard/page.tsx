@@ -9,11 +9,9 @@ export const metadata = {
 
 export default function DashboardPage() {
   return (
-    <div className="p-6 space-y-6">
-      <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   )
 }
 

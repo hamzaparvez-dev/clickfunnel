@@ -9,11 +9,9 @@ export const metadata = {
 
 export default function FunnelsPage() {
   return (
-    <div className="p-6 space-y-6">
-      <Suspense fallback={<FunnelsSkeleton />}>
-        <FunnelsContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<FunnelsSkeleton />}>
+      <FunnelsContent />
+    </Suspense>
   )
 }
 
