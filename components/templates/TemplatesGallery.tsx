@@ -38,7 +38,7 @@ export function TemplatesGallery() {
       // Generate HTML for ALL pages
       const allPagesHTML = tpl.pageDefinitions.map((pageDef: any, index: number) => {
         console.log(`Generating page ${index + 1}:`, pageDef.name, `(${pageDef.type})`)
-        const pageHTML = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name)
+        const pageHTML = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name, tpl.variation || 'classic')
         return {
           name: pageDef.name,
           type: pageDef.type,
@@ -298,7 +298,7 @@ export function TemplatesGallery() {
         console.log(`\n📄 Creating page ${i + 1}/${tpl.pageDefinitions.length}:`, pageDef.name, `(${pageDef.type})`)
         
         // Generate GrapesJS HTML for this page type
-        const htmlContent = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name)
+        const htmlContent = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name, tpl.variation || 'classic')
         console.log('Generated HTML length:', htmlContent.length)
         
         // Create the page

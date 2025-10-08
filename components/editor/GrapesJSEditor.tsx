@@ -77,9 +77,9 @@ export function GrapesJSEditor({ funnelId, pageId }: GrapesJSEditorProps) {
     if (!editorRef.current || editor) return
 
     console.log('🎨 Initializing GrapesJS Editor...')
-    console.log('Page:', page)
-    console.log('Funnel:', funnel)
+    console.time('Editor Initialization')
 
+    // Initialize editor with minimal config for faster loading
     const grapesEditor = grapesjs.init({
       container: editorRef.current,
         height: '100%',
@@ -97,22 +97,11 @@ export function GrapesJSEditor({ funnelId, pageId }: GrapesJSEditorProps) {
 
         deviceManager: {
           devices: [
-            {
-              name: 'Desktop',
-              width: '',
-            },
-            {
-              name: 'Tablet',
-              width: '768px',
-              widthMedia: '992px',
-            },
-            {
-              name: 'Mobile',
-              width: '375px',
-              widthMedia: '480px',
-            },
-          ],
-        },
+          { name: 'Desktop', width: '' },
+          { name: 'Tablet', width: '768px', widthMedia: '992px' },
+          { name: 'Mobile', width: '375px', widthMedia: '480px' },
+        ],
+      },
 
       panels: {
         defaults: [
@@ -133,121 +122,50 @@ export function GrapesJSEditor({ funnelId, pageId }: GrapesJSEditorProps) {
             id: 'panel-devices',
             el: '.panel__devices',
             buttons: [
-              {
-                id: 'device-desktop',
-                label: '💻',
-                command: 'set-device-desktop',
-                active: true,
-                togglable: false,
-              },
-              {
-                id: 'device-tablet',
-                label: '📱',
-                command: 'set-device-tablet',
-                togglable: false,
-              },
-              {
-                id: 'device-mobile',
-                label: '📱',
-                command: 'set-device-mobile',
-                togglable: false,
-              },
+              { id: 'device-desktop', label: '💻', command: 'set-device-desktop', active: true, togglable: false },
+              { id: 'device-tablet', label: '📱', command: 'set-device-tablet', togglable: false },
+              { id: 'device-mobile', label: '📱', command: 'set-device-mobile', togglable: false },
             ],
-          },
-        ],
-      },
-
-      plugins: [
-        gjsPresetWebpage,
-        gjsBlocksBasic,
-        gjsPluginForms,
-        gjsCountdown,
-        gjsPluginExport,
-        gjsNavbar,
-        gjsTabs,
-      ],
-
-      pluginsOpts: {
-        [gjsPresetWebpage as any]: {
-          blocksBasicOpts: {
-            blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video'],
-            flexGrid: true,
-          },
-          blocks: ['link-block', 'quote', 'text-basic'],
+            },
+          ],
         },
-      },
 
-      layerManager: {
-        appendTo: '.layers-container',
-      },
+      // Load only essential plugins for speed
+      plugins: [gjsBlocksBasic, gjsPluginForms],
 
+      pluginsOpts: {},
+
+      layerManager: { appendTo: '.layers-container' },
       styleManager: {
         appendTo: '.styles-container',
         sectors: [
-          {
-            name: 'Typography',
-            open: false,
-            buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration'],
-          },
-          {
-            name: 'Dimension',
-            open: false,
-            buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding'],
-          },
-          {
-            name: 'Background',
-            open: false,
-            buildProps: ['background-color', 'background-image', 'background-repeat', 'background-position', 'background-size'],
-          },
-          {
-            name: 'Border',
-            open: false,
-            buildProps: ['border', 'border-radius', 'border-width', 'border-style', 'border-color'],
-          },
-          {
-            name: 'Extra',
-            open: false,
-            buildProps: ['opacity', 'transition', 'transform', 'cursor', 'overflow', 'box-shadow'],
-          },
-          {
-            name: 'Flex',
-            open: false,
-            buildProps: ['flex-direction', 'justify-content', 'align-items', 'flex-wrap', 'gap'],
-          },
+          { name: 'Typography', open: false, buildProps: ['font-family', 'font-size', 'font-weight', 'color', 'text-align'] },
+          { name: 'Dimension', open: false, buildProps: ['width', 'height', 'margin', 'padding'] },
+          { name: 'Background', open: false, buildProps: ['background-color', 'background-image'] },
+          { name: 'Border', open: false, buildProps: ['border', 'border-radius'] },
         ],
       },
-
-      traitManager: {
-        appendTo: '.traits-container',
-      },
-
-      blockManager: {
-        appendTo: '.blocks-container',
-      },
+      traitManager: { appendTo: '.traits-container' },
+      blockManager: { appendTo: '.blocks-container' },
     })
 
     // Add custom commands
-    grapesEditor.Commands.add('set-device-desktop', {
-      run: (editor) => editor.setDevice('Desktop'),
-    })
-
-    grapesEditor.Commands.add('set-device-tablet', {
-      run: (editor) => editor.setDevice('Tablet'),
-    })
-
-    grapesEditor.Commands.add('set-device-mobile', {
-      run: (editor) => editor.setDevice('Mobile'),
-    })
+    grapesEditor.Commands.add('set-device-desktop', { run: (ed) => ed.setDevice('Desktop') })
+    grapesEditor.Commands.add('set-device-tablet', { run: (ed) => ed.setDevice('Tablet') })
+    grapesEditor.Commands.add('set-device-mobile', { run: (ed) => ed.setDevice('Mobile') })
 
     // Add custom components and blocks
     addCustomComponents(grapesEditor, page?.type || 'landing')
     addCustomBlocks(grapesEditor, page?.type || 'landing')
 
-    // Load page content
-    loadPageContent(grapesEditor, page)
-
-    setEditor(grapesEditor)
-    setLoading(false)
+    // Load content asynchronously after editor is ready
+    setTimeout(() => {
+      loadPageContent(grapesEditor, page)
+      setEditor(grapesEditor)
+      setLoading(false)
+      console.timeEnd('Editor Initialization')
+      console.log('✅ Editor loaded and ready!')
+    }, 100)
 
     return () => {
       if (grapesEditor) {
@@ -259,41 +177,83 @@ export function GrapesJSEditor({ funnelId, pageId }: GrapesJSEditorProps) {
   const loadPageContent = (editor: any, page: any) => {
     if (!page) return
 
+    console.time('Content Loading')
+
     try {
       if (page.content) {
         const content = typeof page.content === 'string' ? JSON.parse(page.content) : page.content
         
-        console.log('📄 Loading page content:', content)
+        console.log('📄 Loading page content...')
         
         // Check if it's GrapesJS format
         if (content.html || content.components) {
           console.log('✅ Loading GrapesJS format')
-          if (content.components && typeof content.components === 'string') {
-            editor.setComponents(content.components)
-          } else if (content.html) {
-            editor.setComponents(content.html)
-          }
-          if (content.css) {
-            editor.setStyle(content.css)
-          }
+          
+          // Use requestAnimationFrame for smoother rendering
+          requestAnimationFrame(() => {
+            if (content.components && typeof content.components === 'string') {
+              editor.setComponents(content.components)
+            } else if (content.html) {
+              // Split large HTML into chunks for better performance
+              const htmlContent = content.html
+              if (htmlContent.length > 50000) {
+                console.log('📦 Large content detected, loading in chunks...')
+                // Load content in smaller chunks
+                const chunkSize = 50000
+                let currentIndex = 0
+                
+                const loadChunk = () => {
+                  if (currentIndex < htmlContent.length) {
+                    const chunk = htmlContent.slice(currentIndex, currentIndex + chunkSize)
+                    if (currentIndex === 0) {
+                      editor.setComponents(chunk)
+                    } else {
+                      editor.addComponents(chunk)
+                    }
+                    currentIndex += chunkSize
+                    requestAnimationFrame(loadChunk)
+                  } else {
+                    console.log('✅ All content loaded')
+                    console.timeEnd('Content Loading')
+                  }
+                }
+                loadChunk()
+              } else {
+                editor.setComponents(htmlContent)
+                console.timeEnd('Content Loading')
+              }
+            }
+            if (content.css) {
+              editor.setStyle(content.css)
+            }
+          })
         } 
         // Check if it's Puck format
         else if (content.content && Array.isArray(content.content)) {
           console.log('🔄 Converting Puck format to HTML')
-          const html = convertPuckToHTML(content.content, page.type)
-          editor.setComponents(html)
+          requestAnimationFrame(() => {
+            const html = convertPuckToHTML(content.content, page.type)
+            editor.setComponents(html)
+            console.timeEnd('Content Loading')
+          })
         }
       } else {
         // No content, load default template based on page type
         console.log('🆕 Loading default template for:', page.type)
-        const defaultContent = getDefaultTemplate(page.type, page.name)
-        editor.setComponents(defaultContent)
+        requestAnimationFrame(() => {
+          const defaultContent = getDefaultTemplate(page.type, page.name)
+          editor.setComponents(defaultContent)
+          console.timeEnd('Content Loading')
+        })
       }
     } catch (e) {
       console.error('❌ Error loading page content:', e)
       // Load fallback template
-      const fallback = getDefaultTemplate(page.type || 'landing', page.name || 'Untitled')
-      editor.setComponents(fallback)
+      requestAnimationFrame(() => {
+        const fallback = getDefaultTemplate(page.type || 'landing', page.name || 'Untitled')
+        editor.setComponents(fallback)
+        console.timeEnd('Content Loading')
+      })
     }
   }
 
@@ -825,11 +785,31 @@ export function GrapesJSEditor({ funnelId, pageId }: GrapesJSEditorProps) {
       </div>
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-xl font-semibold text-gray-700">Loading Editor...</p>
-            <p className="text-gray-500 mt-2">Please wait</p>
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+          <div className="text-center max-w-md px-6">
+            <div className="relative mb-8">
+              <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-t-4 border-indigo-600 mx-auto"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl">🎨</span>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Loading Your Editor</h2>
+            <p className="text-gray-600 mb-6">Setting up your design workspace...</p>
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-600">✓ Initializing editor</span>
+                <span className="text-green-600 font-semibold">Done</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-600">⚡ Loading components</span>
+                <span className="text-indigo-600 font-semibold animate-pulse">Loading...</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">📄 Preparing content</span>
+                <span className="text-gray-400">Pending</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-6">💡 Tip: This should only take a few seconds</p>
           </div>
         </div>
       ) : (
