@@ -1,24 +1,23 @@
-import { GrapesJSEditor } from '@/components/editor/GrapesJSEditor'
 import { notFound } from 'next/navigation'
+import { EditorLoader } from '@/components/editor/EditorLoader'
 
 export const metadata = {
-  title: 'GrapesJS Editor | ClickFunnels Clone',
-  description: 'Professional drag & drop page builder powered by GrapesJS',
+  title: 'Page Editor | ClickFunnels Clone',
 }
 
 interface PageProps {
-  params: Promise<{
+  params: {
     funnelId: string
     pageId: string
-  }>
+  }
 }
 
-export default async function EditorPage({ params }: PageProps) {
-  const { funnelId, pageId } = await params
+export default function EditorPage({ params }: PageProps) {
+  const { funnelId, pageId } = params
 
   if (!funnelId || !pageId) {
     notFound()
   }
 
-  return <GrapesJSEditor funnelId={funnelId} pageId={pageId} />
+  return <EditorLoader funnelId={funnelId} pageId={pageId} />
 }

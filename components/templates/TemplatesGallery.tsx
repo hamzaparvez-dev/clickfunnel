@@ -12,7 +12,7 @@ export function TemplatesGallery() {
   const { createFunnel, createPage, updatePage } = useApp()
   const [category, setCategory] = useState('All Templates')
   const [query, setQuery] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [busyTemplateId, setBusyTemplateId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     if (query.trim()) {
@@ -38,7 +38,7 @@ export function TemplatesGallery() {
       // Generate HTML for ALL pages
       const allPagesHTML = tpl.pageDefinitions.map((pageDef: any, index: number) => {
         console.log(`Generating page ${index + 1}:`, pageDef.name, `(${pageDef.type})`)
-        const pageHTML = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name, tpl.variation || 'classic')
+        const pageHTML = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name)
         return {
           name: pageDef.name,
           type: pageDef.type,
@@ -60,7 +60,7 @@ export function TemplatesGallery() {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Preview - ${tpl.name} (Complete Funnel)</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       margin: 0;
@@ -101,7 +101,6 @@ export function TemplatesGallery() {
   </style>
 </head>
 <body>
-  <!-- Funnel Navigation Bar -->
   <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
     <div style="max-width: 1400px; margin: 0 auto; padding: 16px 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -119,7 +118,6 @@ export function TemplatesGallery() {
         </div>
       </div>
       
-      <!-- Funnel Steps -->
       <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
         ${allPagesHTML.map((page: any, idx: number) => `
           <div class="nav-step ${idx === 0 ? 'active' : ''}" id="step-${idx}" onclick="goToPage(${idx})" style="flex: 1; min-width: 140px; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; cursor: pointer; text-align: center; border: 2px solid rgba(255,255,255,0.2);">
@@ -132,7 +130,6 @@ export function TemplatesGallery() {
     </div>
   </div>
 
-  <!-- Page Content (with margin for fixed nav) -->
   <div style="margin-top: 140px;">
     ${allPagesHTML.map((page: any, idx: number) => `
       <div class="funnel-page ${idx === 0 ? 'active' : ''}" id="page-${idx}">
@@ -259,7 +256,7 @@ export function TemplatesGallery() {
         <html>
           <head>
             <meta charset="utf-8">
-            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+            <script src="https://cdn.tailwindcss.com"></script>
           </head>
           <body class="flex items-center justify-center min-h-screen bg-gray-50">
             <div class="text-center">
@@ -275,8 +272,8 @@ export function TemplatesGallery() {
   }
 
   const useTemplate = async (tpl: any) => {
-    if (busy) return
-    setBusy(true)
+    if (busyTemplateId) return // Prevent multiple simultaneous creations
+    setBusyTemplateId(tpl.id)
     
     console.log('=== USE TEMPLATE (GrapesJS) ===')
     console.log('Template:', tpl.name, 'ID:', tpl.id, 'Category:', tpl.category)
@@ -298,7 +295,7 @@ export function TemplatesGallery() {
         console.log(`\n📄 Creating page ${i + 1}/${tpl.pageDefinitions.length}:`, pageDef.name, `(${pageDef.type})`)
         
         // Generate GrapesJS HTML for this page type
-        const htmlContent = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name, tpl.variation || 'classic')
+        const htmlContent = getGrapesJSTemplate(pageDef.type, templateCategory, pageDef.name)
         console.log('Generated HTML length:', htmlContent.length)
         
         // Create the page
@@ -331,9 +328,9 @@ export function TemplatesGallery() {
     } catch (error) {
       console.error('❌ Error creating funnel from template:', error)
       alert('❌ Failed to create funnel. Please try again.')
-    } finally {
-      setBusy(false)
+      setBusyTemplateId(null) // Reset on error so user can retry
     }
+    // Don't reset on success - redirect will unmount component
   }
 
   return (
@@ -419,17 +416,18 @@ export function TemplatesGallery() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => previewTemplate(tpl)}
-                    className="flex-1 flex items-center justify-center gap-2 border-2 border-primary-600 text-primary-600 py-2.5 rounded-lg hover:bg-primary-50 font-medium transition-colors"
+                    disabled={busyTemplateId === tpl.id}
+                    className="flex-1 flex items-center justify-center gap-2 border-2 border-primary-600 text-primary-600 py-2.5 rounded-lg hover:bg-primary-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FiEye className="w-4 h-4" />
                     Preview
                   </button>
                   <button
-                    disabled={busy}
+                    disabled={busyTemplateId !== null}
                     onClick={() => useTemplate(tpl)}
-                    className="flex-1 bg-primary-600 text-white py-2.5 rounded-lg hover:bg-primary-700 disabled:opacity-50 font-medium transition-colors"
+                    className="flex-1 bg-primary-600 text-white py-2.5 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >
-                    {busy ? 'Creating...' : 'Use Template'}
+                    {busyTemplateId === tpl.id ? 'Creating...' : 'Use Template'}
                   </button>
                 </div>
               </div>

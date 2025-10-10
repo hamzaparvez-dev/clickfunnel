@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET /api/products/[id] - Get a single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         collections: {
           include: {
@@ -42,9 +43,10 @@ export async function GET(
 // PATCH /api/products/[id] - Update a product
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const {
       name,
@@ -81,7 +83,7 @@ export async function PATCH(
     if (status !== undefined) updateData.status = status
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         collections: {
@@ -96,14 +98,14 @@ export async function PATCH(
     if (collections !== undefined) {
       // Remove existing collections
       await prisma.productCollection.deleteMany({
-        where: { productId: params.id }
+        where: { productId: id }
       })
 
       // Add new collections
       if (collections.length > 0) {
         await prisma.productCollection.createMany({
           data: collections.map((collectionId: string, index: number) => ({
-            productId: params.id,
+            productId: id,
             collectionId,
             sortOrder: index
           }))
@@ -124,11 +126,12 @@ export async function PATCH(
 // DELETE /api/products/[id] - Delete a product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     await prisma.product.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ success: true })

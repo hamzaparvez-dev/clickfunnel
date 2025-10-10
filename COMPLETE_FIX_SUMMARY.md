@@ -216,8 +216,14 @@ document.querySelectorAll('button, a').forEach(element => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight') nextPage()
-  if (e.key === 'ArrowLeft') prevPage()
+  if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    nextPage()
+  }
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    prevPage()
+  }
 })
 ```
 

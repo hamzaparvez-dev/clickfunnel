@@ -1,7 +1,26 @@
 import React from 'react'
-import { BuilderElement } from '../PageEditor'
 
-export function PropertiesPanel({ selected, onChange, onDelete }: { selected: BuilderElement | null; onChange: (updates: any) => void; onDelete: () => void }) {
+type BuilderElement = {
+  id: string
+  type: 'heading' | 'text' | 'button' | 'image' | 'video' | 'form'
+  props: {
+    text?: string
+    size?: number
+    color?: string
+    align?: 'left' | 'center' | 'right'
+    bg?: string
+    radius?: number
+    src?: string
+    alt?: string
+    width?: number
+    height?: number
+    cta?: string
+  }
+}
+
+type PropertyUpdates = Partial<BuilderElement['props']>
+
+export function PropertiesPanel({ selected, onChange, onDelete }: { selected: BuilderElement | null; onChange: (updates: PropertyUpdates) => void; onDelete: () => void }) {
   return (
     <aside className="w-80 bg-white border-l border-gray-200 flex-shrink-0">
       <div className="h-14 px-4 flex items-center justify-between border-b border-gray-200">
@@ -26,7 +45,7 @@ export function PropertiesPanel({ selected, onChange, onDelete }: { selected: Bu
                   <input type="color" className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.color || '#111827'} onChange={(e) => onChange({ color: e.target.value })} />
                 </Field>
                 <Field label="Align">
-                  <select className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.align || 'left'} onChange={(e) => onChange({ align: e.target.value })}>
+                  <select className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.align || 'left'} onChange={(e) => onChange({ align: e.target.value as 'left' | 'center' | 'right' })}>
                     <option value="left">Left</option>
                     <option value="center">Center</option>
                     <option value="right">Right</option>
@@ -90,7 +109,7 @@ export function PropertiesPanel({ selected, onChange, onDelete }: { selected: Bu
                     <input type="number" className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.width || 800} onChange={(e) => onChange({ width: Number(e.target.value) })} />
                   </Field>
                   <Field label="Height">
-                    <input type="number" className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.height || 450} onChange={(e) => onChange({ height: Number(e.target.value })}) />
+                    <input type="number" className="w-full border border-gray-300 rounded px-2 py-1" value={selected.props.height || 450} onChange={(e) => onChange({ height: Number(e.target.value) })} />
                   </Field>
                 </div>
               </>

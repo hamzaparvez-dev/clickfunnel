@@ -102,7 +102,7 @@ export function CollectionsContent() {
     setShowModal(true)
   }
 
-  const handleCloseModal() {
+  const handleCloseModal = () => {
     setShowModal(false)
     setEditingCollection(null)
   }

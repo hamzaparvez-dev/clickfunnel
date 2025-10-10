@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FiArrowLeft, FiChevronRight, FiPlay } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useApp } from '@/lib/context/AppContext'
 
 const funnelCategories = [
   {
@@ -103,9 +104,11 @@ const funnelCategories = [
 
 export function FunnelTypeSelector() {
   const router = useRouter()
+  const { createFunnel, createPage } = useApp()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<any>(null)
   const [showVideo, setShowVideo] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   const handleSelectType = (category: any, type: any) => {
     setSelectedCategory(category.id)
@@ -116,6 +119,43 @@ export function FunnelTypeSelector() {
   const handleBrowseTemplates = () => {
     const category = funnelCategories.find(c => c.name === selectedType.category)
     router.push(`/funnels/templates?type=${selectedType.id}&category=${category?.id}`)
+  }
+
+  const handleStartFromScratch = async () => {
+    if (isCreating) return
+    
+    setIsCreating(true)
+    try {
+      
+      // Create a new funnel
+      const funnel = await createFunnel({
+        name: 'My New Funnel',
+        description: 'Created from scratch'
+      })
+      
+      if (!funnel?.id) {
+        throw new Error('Failed to create funnel: Invalid response')
+      }
+      
+      // Create a landing page
+      const page = await createPage(funnel.id, {
+        name: 'Landing Page',
+        type: 'landing'
+      })
+      
+      if (!page?.id) {
+        throw new Error('Failed to create page: Invalid response')
+      }
+      
+      // Redirect directly to the editor
+      router.push(`/editor/${funnel.id}/${page.id}`)
+      
+    } catch (error) {
+      console.error('❌ Error creating funnel from scratch:', error)
+      alert('❌ Failed to create funnel. Please try again.')
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   if (showVideo && selectedType) {
@@ -255,8 +295,12 @@ export function FunnelTypeSelector() {
                 Browse Templates
               </button>
 
-              <button className="w-full border-2 border-gray-800 text-gray-800 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all">
-                ⚡ Start from Scratch
+              <button 
+                onClick={handleStartFromScratch}
+                disabled={isCreating}
+                className="w-full border-2 border-gray-800 text-gray-800 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ⚡ {isCreating ? 'Creating...' : 'Start from Scratch'}
               </button>
             </div>
           </div>
@@ -290,11 +334,12 @@ export function FunnelTypeSelector() {
           <h1 className="text-5xl font-bold text-gray-900 mb-4">What Would You Like To Build?</h1>
           <p className="text-xl text-gray-600">Get started by selecting a proven funnel type</p>
           <button
-            onClick={() => router.push('/funnels/templates')}
-            className="mt-6 inline-flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-black transition-colors"
+            onClick={handleStartFromScratch}
+            disabled={isCreating}
+            className="mt-6 inline-flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>⚡</span>
-            <span>Start from Scratch</span>
+            <span>{isCreating ? 'Creating...' : 'Start from Scratch'}</span>
           </button>
         </div>
 

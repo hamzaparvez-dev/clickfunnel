@@ -155,7 +155,7 @@ export function FunnelsContent() {
         </div>
       )}
 
-      {/* Create Funnel Modal (unused when routing to /templates) */}
+
       </div>
     </div>
   )

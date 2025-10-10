@@ -5,52 +5,40 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Create or find a sample team
-  let team = await prisma.team.findUnique({
+  // Create or find a sample team (idempotent)
+  const team = await prisma.team.upsert({
     where: { slug: 'default-team' },
+    update: {},
+    create: {
+      name: 'Default Team',
+      slug: 'default-team',
+    },
   })
-
-  if (!team) {
-    team = await prisma.team.create({
-      data: {
-        name: 'Default Team',
-        slug: 'default-team',
-      },
-    })
-  }
 
   // Create sample funnels
-  let funnel1 = await prisma.funnel.findUnique({
+  const funnel1 = await prisma.funnel.upsert({
     where: { slug: 'ecommerce-sales-funnel' },
+    update: {},
+    create: {
+      name: 'E-commerce Sales Funnel',
+      description: 'Complete sales funnel for online products',
+      status: 'active',
+      slug: 'ecommerce-sales-funnel',
+      teamId: team.id,
+    },
   })
 
-  if (!funnel1) {
-    funnel1 = await prisma.funnel.create({
-      data: {
-        name: 'E-commerce Sales Funnel',
-        description: 'Complete sales funnel for online products',
-        status: 'active',
-        slug: 'ecommerce-sales-funnel',
-        teamId: team.id,
-      },
-    })
-  }
-
-  let funnel2 = await prisma.funnel.findUnique({
+  const funnel2 = await prisma.funnel.upsert({
     where: { slug: 'lead-generation-funnel' },
+    update: {},
+    create: {
+      name: 'Lead Generation Funnel',
+      description: 'Capture leads and nurture prospects',
+      status: 'draft',
+      slug: 'lead-generation-funnel',
+      teamId: team.id,
+    },
   })
-
-  if (!funnel2) {
-    funnel2 = await prisma.funnel.create({
-      data: {
-        name: 'Lead Generation Funnel',
-        description: 'Capture leads and nurture prospects',
-        status: 'draft',
-        slug: 'lead-generation-funnel',
-        teamId: team.id,
-      },
-    })
-  }
 
   // Create sample pages for funnel1
   await prisma.page.createMany({
@@ -80,6 +68,7 @@ async function main() {
         status: 'published',
       },
     ],
+    skipDuplicates: true,
   })
 
   // Create sample pages for funnel2
@@ -102,6 +91,7 @@ async function main() {
         status: 'draft',
       },
     ],
+    skipDuplicates: true,
   })
 
   console.log('✅ Database seeded successfully!')

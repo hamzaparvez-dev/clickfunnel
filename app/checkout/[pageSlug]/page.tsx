@@ -2,13 +2,13 @@ import { CheckoutContent } from '@/components/checkout/CheckoutContent'
 import { notFound } from 'next/navigation'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     pageSlug: string
-  }
+  }>
 }
 
 export default async function CheckoutPage({ params }: PageProps) {
-  const { pageSlug } = params
+  const { pageSlug } = await params
 
   if (!pageSlug) {
     notFound()
@@ -19,6 +19,7 @@ export default async function CheckoutPage({ params }: PageProps) {
 }
 
 export async function generateMetadata({ params }: PageProps) {
+  const { pageSlug } = await params
   // Fetch page metadata from API
   return {
     title: 'Checkout | ClickFunnels Clone',

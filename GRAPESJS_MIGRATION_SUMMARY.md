@@ -200,7 +200,7 @@ Pages are saved as:
 <html>
 <head>
   <meta charset="utf-8">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>/* Generated CSS */</style>
 </head>
 <body>

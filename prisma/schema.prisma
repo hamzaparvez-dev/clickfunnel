@@ -11,29 +11,39 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  firebaseUid   String         @unique
-  role          String         @default("user")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  teams         TeamMember[]
-  subscriptions Subscription[]
-  orders        Order[]
-  leads         Lead[]
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
+  firebaseUid       String             @unique
+  role              String             @default("user")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  teams             TeamMember[]
+  subscriptions     Subscription[]
+  orders            Order[]
+  leads             Lead[]
+  inventoryLogs     InventoryLog[]
+  membershipMembers MembershipMember[]
+  referrals         Referral[]         @relation("UserReferrals")
+  referredBy        Referral[]         @relation("ReferredByUser")
 
   @@map("users")
 }
 
 model Team {
-  id        String       @id @default(cuid())
-  name      String
-  slug      String       @unique
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  members   TeamMember[]
-  funnels   Funnel[]
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  members         TeamMember[]
+  funnels         Funnel[]
+  membershipSites MembershipSite[]
+  emailLogs       EmailLog[]
+  products        Product[]
+  collections     Collection[]
+  customers       Customer[]
+  EmailTemplate   EmailTemplate[]
 
   @@map("teams")
 }
@@ -52,16 +62,16 @@ model TeamMember {
 }
 
 model Funnel {
-  id             String   @id @default(cuid())
+  id             String            @id @default(cuid())
   teamId         String
   name           String
-  slug           String   @unique
+  slug           String            @unique
   description    String?
-  status         String   @default("draft") // draft, active, paused
+  status         String            @default("draft") // draft, active, paused
   domainSettings Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  team           Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
   pages          Page[]
   leads          Lead[]
   orders         Order[]
@@ -72,26 +82,27 @@ model Funnel {
 }
 
 model Page {
-  id                   String         @id @default(cuid())
-  funnelId             String
-  name                 String
-  slug                 String
-  path                 String
-  type                 String         @default("landing") // landing, sales, checkout, upsell, thankyou
-  publishedRevisionId  String?
-  metaTitle            String?
-  metaDescription      String?
-  customCSS            String?
-  customJS             String?
-  status               String         @default("draft")
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  funnel               Funnel         @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  revisions            PageRevision[]
-  abTests              ABTest[]
-  publishedRevision    PageRevision?  @relation("PublishedRevision", fields: [publishedRevisionId], references: [id])
-  leads                Lead[]
-  pageViews            PageView[]
+  id                  String         @id @default(cuid())
+  funnelId            String
+  name                String
+  slug                String
+  path                String
+  type                String         @default("landing") // landing, sales, checkout, upsell, thankyou
+  order               Int            @default(0)
+  publishedRevisionId String?
+  metaTitle           String?
+  metaDescription     String?
+  customCSS           String?
+  customJS            String?
+  status              String         @default("draft")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  funnel              Funnel         @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  revisions           PageRevision[]
+  abTests             ABTest[]
+  publishedRevision   PageRevision?  @relation("PublishedRevision", fields: [publishedRevisionId], references: [id])
+  leads               Lead[]
+  pageViews           PageView[]
 
   @@unique([funnelId, slug])
   @@index([funnelId])
@@ -99,14 +110,14 @@ model Page {
 }
 
 model PageRevision {
-  id              String   @id @default(cuid())
-  pageId          String
-  content         Json     // Full page structure as JSON
-  meta            Json?    // Additional metadata
-  version         Int      @default(1)
-  createdAt       DateTime @default(now())
-  page            Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  publishedPages  Page[]   @relation("PublishedRevision")
+  id             String   @id @default(cuid())
+  pageId         String
+  content        Json // Full page structure as JSON
+  meta           Json? // Additional metadata
+  version        Int      @default(1)
+  createdAt      DateTime @default(now())
+  page           Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  publishedPages Page[]   @relation("PublishedRevision")
 
   @@index([pageId])
   @@map("page_revisions")
@@ -118,7 +129,7 @@ model Template {
   description String?
   category    String
   thumbnail   String?
-  content     Json     // Page structure
+  content     Json // Page structure
   tags        String[]
   isPremium   Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -128,19 +139,19 @@ model Template {
 }
 
 model Lead {
-  id         String   @id @default(cuid())
-  funnelId   String
-  pageId     String?
-  userId     String?
-  email      String
-  data       Json     // Form data
-  ip         String?
-  referrer   String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-  funnel     Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  page       Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  funnelId  String
+  pageId    String?
+  userId    String?
+  email     String
+  data      Json // Form data
+  ip        String?
+  referrer  String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  funnel    Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  page      Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([funnelId])
   @@index([email])
@@ -148,23 +159,23 @@ model Lead {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  userId            String?
-  funnelId          String?
-  stripeSessionId   String?     @unique
-  stripePaymentId   String?     @unique
-  customerEmail     String
-  customerName      String?
-  amount            Decimal     @db.Decimal(10, 2)
-  currency          String      @default("usd")
-  status            String      @default("pending") // pending, completed, failed, refunded
-  items             Json        // Order items
-  metadata          Json?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  user              User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  funnel            Funnel?     @relation(fields: [funnelId], references: [id], onDelete: SetNull)
-  orderItems        OrderItem[]
+  id              String      @id @default(cuid())
+  userId          String?
+  funnelId        String?
+  stripeSessionId String?     @unique
+  stripePaymentId String?     @unique
+  customerEmail   String
+  customerName    String?
+  amount          Decimal     @db.Decimal(10, 2)
+  currency        String      @default("usd")
+  status          String      @default("pending") // pending, completed, failed, refunded
+  items           Json // Order items
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  funnel          Funnel?     @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+  orderItems      OrderItem[]
 
   @@index([userId])
   @@index([funnelId])
@@ -178,7 +189,7 @@ model Subscription {
   stripeSubscriptionId String   @unique
   stripeCustomerId     String
   stripePriceId        String
-  status               String   // active, canceled, past_due, trialing
+  status               String // active, canceled, past_due, trialing
   currentPeriodStart   DateTime
   currentPeriodEnd     DateTime
   cancelAtPeriodEnd    Boolean  @default(false)
@@ -192,17 +203,17 @@ model Subscription {
 }
 
 model ABTest {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   pageId        String
   name          String
-  status        String   @default("draft") // draft, running, completed, paused
-  variants      Json     // Array of variant configurations
+  status        String       @default("draft") // draft, running, completed, paused
+  variants      Json // Array of variant configurations
   winnerVariant String?
   startedAt     DateTime?
   completedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  page          Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
   stats         ABTestStat[]
 
   @@index([pageId])
@@ -256,14 +267,14 @@ model PageView {
 }
 
 model Webhook {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   teamId    String
   url       String
   secret    String
   events    String[] // Array of event names to subscribe to
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
   logs      WebhookLog[]
 
   @@index([teamId])
@@ -287,29 +298,29 @@ model WebhookLog {
 }
 
 model EmailSequence {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   description String?
-  trigger     String   // form_submit, purchase, page_visit
-  status      String   @default("active")
-  steps       Json     // Array of email steps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  trigger     String // form_submit, purchase, page_visit
+  status      String            @default("active")
+  steps       Json // Array of email steps
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   subscribers EmailSubscriber[]
 
   @@map("email_sequences")
 }
 
 model EmailSubscriber {
-  id         String        @id @default(cuid())
-  sequenceId String
-  email      String
-  status     String        @default("active") // active, completed, unsubscribed
-  currentStep Int          @default(0)
-  metadata   Json?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  sequence   EmailSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  sequenceId  String
+  email       String
+  status      String        @default("active") // active, completed, unsubscribed
+  currentStep Int           @default(0)
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  sequence    EmailSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
 
   @@index([sequenceId])
   @@index([email])
@@ -345,36 +356,39 @@ model Media {
 }
 
 model MembershipSite {
-  id          String   @id @default(cuid())
+  id          String              @id @default(cuid())
   teamId      String
   name        String
-  slug        String   @unique
+  slug        String
   description String?
-  settings    Json?    // Access rules, drip content settings
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  settings    Json? // Access rules, drip content settings
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  team        Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
   tiers       MembershipTier[]
   content     MembershipContent[]
 
-  @@index([teamId])
+  @@unique([teamId, slug])
   @@map("membership_sites")
 }
 
-
 model MembershipTier {
-  id          String         @id @default(cuid())
-  siteId      String
-  name        String
-  description String?
-  price       Decimal        @db.Decimal(10, 2)
-  interval    String         // monthly, yearly, lifetime
-  features    Json?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  site        MembershipSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  members     MembershipMember[]
+  id              String             @id @default(cuid())
+  siteId          String
+  name            String
+  description     String?
+  price           Decimal            @db.Decimal(10, 2)
+  interval        String // monthly, yearly, lifetime
+  features        Json?
+  stripePriceId   String?
+  stripeProductId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  site            MembershipSite     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  members         MembershipMember[]
 
   @@index([siteId])
+  @@index([stripePriceId])
   @@map("membership_tiers")
 }
 
@@ -387,6 +401,7 @@ model MembershipMember {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   tier      MembershipTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tierId, userId])
   @@index([tierId])
@@ -395,19 +410,19 @@ model MembershipMember {
 }
 
 model MembershipContent {
-  id          String         @id @default(cuid())
-  siteId      String
-  title       String
-  slug        String
-  content     String         @db.Text
-  type        String         // lesson, video, download
-  order       Int            @default(0)
-  isDrip      Boolean        @default(false)
-  dripDays    Int?
-  requiredTiers Json?        // Array of tier IDs that can access
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  site        MembershipSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id            String         @id @default(cuid())
+  siteId        String
+  title         String
+  slug          String
+  content       String         @db.Text
+  type          String // lesson, video, download
+  order         Int            @default(0)
+  isDrip        Boolean        @default(false)
+  dripDays      Int?
+  requiredTiers Json? // Array of tier IDs that can access
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  site          MembershipSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@unique([siteId, slug])
   @@index([siteId])
@@ -415,28 +430,27 @@ model MembershipContent {
 }
 
 model BlogPost {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   teamId          String
   title           String
-  slug            String   @unique
-  content         String   @db.Text
+  slug            String    @unique
+  content         String    @db.Text
   excerpt         String?
   featuredImage   String?
-  status          String   @default("draft") // draft, published
+  status          String    @default("draft") // draft, published
   publishedAt     DateTime?
   metaTitle       String?
   metaDescription String?
   tags            String[]
   categories      String[]
   authorId        String?
-  viewCount       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  viewCount       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([teamId])
   @@index([slug])
   @@index([status])
-  @@map("blog_posts")
 }
 
 model EmailTemplate {
@@ -445,10 +459,11 @@ model EmailTemplate {
   name      String
   subject   String
   content   String   @db.Text
-  type      String   // welcome, abandoned_cart, purchase_confirmation, etc.
-  variables Json?    // Available template variables
+  type      String // welcome, abandoned_cart, purchase_confirmation, etc.
+  variables Json? // Available template variables
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
   @@map("email_templates")
@@ -456,15 +471,18 @@ model EmailTemplate {
 
 model EmailLog {
   id         String   @id @default(cuid())
+  teamId     String?
   to         String
   subject    String
-  status     String   // sent, failed, bounced, opened, clicked
-  provider   String   // resend, sendgrid, etc.
+  status     String // sent, failed, bounced, opened, clicked
+  provider   String // resend, sendgrid, etc.
   providerId String?
   error      String?
   metadata   Json?
   createdAt  DateTime @default(now())
+  team       Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
 
+  @@index([teamId])
   @@index([to])
   @@index([status])
   @@index([createdAt])
@@ -472,28 +490,29 @@ model EmailLog {
 }
 
 model Product {
-  id            String              @id @default(cuid())
-  teamId        String?
-  name          String
-  description   String?             @db.Text
-  type          String              @default("digital") // digital, physical, bundle
-  sku           String?             @unique
-  price         Decimal             @db.Decimal(10, 2)
-  compareAtPrice Decimal?           @db.Decimal(10, 2)
-  images        String[]
-  status        String              @default("active") // active, draft, archived
-  inventory     Int?                // For physical products
-  trackInventory Boolean            @default(false)
-  allowBackorder Boolean            @default(false)
-  weight        Decimal?            @db.Decimal(10, 2)
-  dimensions    Json?               // { length, width, height }
-  tags          String[]
-  metadata      Json?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  collections   ProductCollection[]
-  inventoryLogs InventoryLog[]
-  orderItems    OrderItem[]
+  id             String              @id @default(cuid())
+  teamId         String?
+  name           String
+  description    String?             @db.Text
+  type           String              @default("digital") // digital, physical, bundle
+  sku            String?             @unique
+  price          Decimal             @db.Decimal(10, 2)
+  compareAtPrice Decimal?            @db.Decimal(10, 2)
+  images         String[]
+  status         String              @default("active") // active, draft, archived
+  inventory      Int? // For physical products
+  trackInventory Boolean             @default(false)
+  allowBackorder Boolean             @default(false)
+  weight         Decimal?            @db.Decimal(10, 2)
+  dimensions     Json? // { length, width, height }
+  tags           String[]
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  team           Team?               @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  collections    ProductCollection[]
+  inventoryLogs  InventoryLog[]
+  orderItems     OrderItem[]
 
   @@index([teamId])
   @@index([type])
@@ -506,15 +525,17 @@ model Collection {
   teamId      String?
   name        String
   description String?             @db.Text
-  slug        String              @unique
+  slug        String
   image       String?
   status      String              @default("active") // active, draft
   sortOrder   Int                 @default(0)
   metadata    Json?
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+  team        Team?               @relation(fields: [teamId], references: [id])
   products    ProductCollection[]
 
+  @@unique([teamId, slug])
   @@index([teamId])
   @@index([status])
   @@map("collections")
@@ -536,14 +557,15 @@ model ProductCollection {
 }
 
 model InventoryLog {
-  id         String   @id @default(cuid())
-  productId  String
-  quantity   Int      // Can be negative for decrements
-  type       String   // restock, sale, adjustment, return
-  note       String?
-  userId     String?
-  createdAt  DateTime @default(now())
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  productId String
+  quantity  Int // Can be negative for decrements
+  type      String // restock, sale, adjustment, return
+  note      String?
+  userId    String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([productId])
   @@index([createdAt])
@@ -551,25 +573,27 @@ model InventoryLog {
 }
 
 model Customer {
-  id              String   @id @default(cuid())
-  teamId          String?
-  email           String   @unique
-  firstName       String?
-  lastName        String?
-  phone           String?
-  company         String?
-  address         Json?    // { street, city, state, zip, country }
-  tags            String[]
-  notes           String?  @db.Text
-  totalSpent      Decimal  @default(0) @db.Decimal(10, 2)
-  orderCount      Int      @default(0)
-  status          String   @default("active") // active, blocked
-  marketingOptIn  Boolean  @default(false)
-  metadata        Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  orderItems      OrderItem[]
+  id             String      @id @default(cuid())
+  teamId         String?
+  email          String
+  firstName      String?
+  lastName       String?
+  phone          String?
+  company        String?
+  address        Json? // { street, city, state, zip, country }
+  tags           String[]
+  notes          String?     @db.Text
+  totalSpent     Decimal     @default(0) @db.Decimal(10, 2)
+  orderCount     Int         @default(0)
+  status         String      @default("active") // active, blocked
+  marketingOptIn Boolean     @default(false)
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  team           Team?       @relation(fields: [teamId], references: [id])
+  orderItems     OrderItem[]
 
+  @@unique([teamId, email])
   @@index([teamId])
   @@index([email])
   @@index([status])
@@ -577,18 +601,18 @@ model Customer {
 }
 
 model OrderItem {
-  id          String    @id @default(cuid())
-  orderId     String
-  productId   String?
-  customerId  String?
-  quantity    Int       @default(1)
-  price       Decimal   @db.Decimal(10, 2)
-  total       Decimal   @db.Decimal(10, 2)
-  metadata    Json?
-  createdAt   DateTime  @default(now())
-  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
-  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  id         String    @id @default(cuid())
+  orderId    String
+  productId  String?
+  customerId String?
+  quantity   Int       @default(1)
+  price      Decimal   @db.Decimal(10, 2)
+  total      Decimal   @db.Decimal(10, 2)
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
@@ -597,20 +621,21 @@ model OrderItem {
 }
 
 model Referral {
-  id              String   @id @default(cuid())
-  userId          String
-  referralCode    String   @unique
-  referredUserId  String?
-  status          String   @default("pending") // pending, completed, paid
-  commission      Decimal  @default(0) @db.Decimal(10, 2)
-  commissionRate  Decimal  @default(0.30) @db.Decimal(3, 2) // 30% default
-  metadata        Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  referralCode   String   @unique
+  referredUserId String?
+  status         String   @default("pending") // pending, completed, paid
+  commission     Decimal  @default(0) @db.Decimal(10, 2)
+  commissionRate Decimal  @default(0.30) @db.Decimal(3, 2) // 30% default
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation("UserReferrals", fields: [userId], references: [id], onDelete: Cascade)
+  referredUser   User?    @relation("ReferredByUser", fields: [referredUserId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([referredUserId])
   @@index([referralCode])
   @@map("referrals")
 }
-

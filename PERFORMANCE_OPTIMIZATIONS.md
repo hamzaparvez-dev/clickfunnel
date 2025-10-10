@@ -62,12 +62,15 @@ editor.setComponents(content.html)
 **After**: Split large HTML into chunks
 ```typescript
 if (htmlContent.length > 50000) {
-  // Load in 50KB chunks for better performance
+  let currentIndex = 0
   const loadChunk = () => {
+    if (currentIndex >= htmlContent.length) return
     const chunk = htmlContent.slice(currentIndex, currentIndex + 50000)
-    editor.setComponents(chunk)
+    editor.addComponents(chunk) // Append, don't replace
+    currentIndex += 50000
     requestAnimationFrame(loadChunk) // Smooth rendering
   }
+  loadChunk()
 }
 ```
 

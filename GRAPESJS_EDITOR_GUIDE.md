@@ -491,23 +491,112 @@ editor.BlockManager.add('my-block', {
 - Click "Export" button
 - Downloads complete HTML file
 - Includes all CSS
-- Includes Tailwind CDN
-- Ready for hosting
+- Requires production-ready Tailwind setup
+- Ready for hosting after Tailwind build
 
-**Exported File:**
+**Exported File (Base):**
 ```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>/* Your CSS */</style>
+  <link href="styles.css" rel="stylesheet">
+  <style>/* Your custom CSS */</style>
 </head>
 <body>
   <!-- Your HTML -->
 </body>
 </html>
 ```
+
+**Production-Ready Tailwind Setup:**
+
+> ⚠️ **Note:** The Tailwind Play CDN (`https://cdn.tailwindcss.com`) is for development only and should NOT be used in production. It includes the entire Tailwind library (~3MB) and processes classes at runtime, causing performance issues.
+
+**Option 1: Precompiled Stylesheet (Simple)**
+
+1. Build Tailwind CSS during your app build process
+2. Configure Tailwind to scan your exported HTML:
+
+```js
+// tailwind.config.js
+module.exports = {
+  content: ['./exported-pages/**/*.html'],
+  theme: { extend: {} },
+  plugins: [],
+}
+```
+
+3. Build the stylesheet:
+```bash
+npx tailwindcss -i ./input.css -o ./styles.css --minify
+```
+
+4. Include the generated `styles.css` with your exported HTML
+5. The output is production-ready with only the CSS classes you actually use
+
+**Option 2: Build Step in Export Process (Recommended)**
+
+Integrate Tailwind CLI into your export workflow for truly "ready for hosting" output:
+
+1. **Install Tailwind CLI** in your project:
+```bash
+npm install -D tailwindcss
+```
+
+2. **Create export post-processing script** that:
+   - Scans the exported HTML for Tailwind classes
+   - Generates an optimized, purged CSS file
+   - Bundles styles.css with the HTML
+
+3. **Example export workflow:**
+
+```js
+// scripts/process-export.js
+const tailwindcss = require('tailwindcss');
+const postcss = require('postcss');
+const fs = require('fs');
+
+async function processExport(htmlContent) {
+  // Configure Tailwind to scan the HTML content
+  const tailwindConfig = {
+    content: [{ raw: htmlContent, extension: 'html' }],
+    theme: { extend: {} },
+  };
+
+  // Generate optimized CSS
+  const css = await postcss([
+    tailwindcss(tailwindConfig),
+    require('autoprefixer'),
+    require('cssnano')({ preset: 'default' })
+  ]).process('@tailwind base; @tailwind components; @tailwind utilities;', {
+    from: undefined
+  });
+
+  // Write optimized styles.css
+  fs.writeFileSync('styles.css', css.content);
+  
+  return { html: htmlContent, css: css.content };
+}
+```
+
+4. **Configure Tailwind's content/purge settings** to analyze the exact HTML being exported:
+   - Use `content: [{ raw: htmlString, extension: 'html' }]` for runtime scanning
+   - This ensures only the Tailwind classes present in your exported HTML are included
+   - Results in a minimal CSS file (typically 5-20KB vs 3MB+ with CDN)
+
+5. **Package for deployment:**
+   - Exported HTML file with `<link href="styles.css" rel="stylesheet">`
+   - Generated `styles.css` (optimized and purged)
+   - Any additional assets (images, fonts, etc.)
+   - Output is truly "ready for hosting" with production performance
+
+**Benefits of Build-Time Approach:**
+- ✅ Optimal file size (5-20KB vs 3MB+)
+- ✅ No runtime class processing
+- ✅ Better SEO and page speed scores
+- ✅ Works offline without CDN dependency
+- ✅ Production-ready output
 
 ---
 

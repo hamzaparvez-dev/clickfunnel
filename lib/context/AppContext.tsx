@@ -1,11 +1,10 @@
 'use client'
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
+import { useAuth } from './AuthContext'
 
-// Using localStorage for now (no API calls until database is set up)
-// This matches your original implementation
-// key required to load the page.
-const STORAGE_KEY = 'clickfunnels-clone-data'
+// App data now uses DATABASE via API calls
+// Editor drafts still use localStorage (see GrapesJSEditor.tsx)
 
 interface AppState {
   funnels: any[]
@@ -117,101 +116,241 @@ const AppContext = createContext<AppContextValue | undefined>(undefined)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
+  const { user } = useAuth()
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedData = localStorage.getItem('funnelBuilderData')
-      if (savedData) {
-        try {
-          dispatch({ type: 'LOAD_DATA', payload: JSON.parse(savedData) })
-        } catch (e) {
-          console.error('Error loading data:', e)
-        }
+  // Helper function to get auth headers
+  const getAuthHeaders = async () => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    }
+
+    if (user) {
+      try {
+        const token = await user.getIdToken()
+        headers['Authorization'] = `Bearer ${token}`
+      } catch (error) {
+        console.error('Error getting auth token:', error)
       }
     }
+
+    return headers
+  }
+
+  // Load funnels and pages from DATABASE on mount
+  useEffect(() => {
+    const loadData = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      try {
+        // Get auth headers (will include token if user is logged in)
+        const headers = await getAuthHeaders()
+        
+        // Fetch funnels from API
+        // In development mode, the server will use a fallback user if no auth token
+        const funnelsResponse = await fetch('/api/funnels', { headers })
+        if (funnelsResponse.ok) {
+          const funnels = await funnelsResponse.json()
+          dispatch({ type: 'SET_FUNNELS', payload: Array.isArray(funnels) ? funnels : [] })
+        } else if (funnelsResponse.status === 401) {
+          console.warn('Not authenticated - some features may be limited')
+        }
+        
+        // Note: Pages are loaded per funnel, not all at once
+        // This keeps the initial load fast
+      } catch (error) {
+        console.error('Error loading data from database:', error)
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load data. Using offline mode.' })
+        
+        // Fallback to localStorage for offline development
+        if (typeof window !== 'undefined') {
+          const savedData = localStorage.getItem('funnelBuilderData_backup')
+          if (savedData) {
+            try {
+              dispatch({ type: 'LOAD_DATA', payload: JSON.parse(savedData) })
+            } catch (e) {
+              console.error('Error loading backup data:', e)
+            }
+          }
+        }
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false })
+      }
+    }
+    
+    // Load data regardless of auth status (server handles auth in dev mode)
+    loadData()
   }, [])
 
-  // Save to localStorage whenever state changes
+  // Backup to localStorage for offline development (optional)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('funnelBuilderData', JSON.stringify(state))
+    if (typeof window !== 'undefined' && state.funnels.length > 0) {
+      localStorage.setItem('funnelBuilderData_backup', JSON.stringify(state))
     }
   }, [state])
 
   const fetchFunnels = async () => {
-    // Data is already loaded from localStorage
-    return Promise.resolve()
+    dispatch({ type: 'SET_LOADING', payload: true })
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/funnels', { headers })
+      if (response.ok) {
+        const funnels = await response.json()
+        dispatch({ type: 'SET_FUNNELS', payload: Array.isArray(funnels) ? funnels : [] })
+      }
+    } catch (error) {
+      console.error('Error fetching funnels:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch funnels' })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
   }
 
   const createFunnel = async (data: any) => {
-    const funnel = {
-      id: 'funnel_' + Date.now(),
-      name: data.name,
-      description: data.description,
-      status: 'draft',
-      pages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/funnels', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      })
+      
+      if (response.ok) {
+        const funnel = await response.json()
+        dispatch({ type: 'ADD_FUNNEL', payload: funnel })
+        return funnel
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to create funnel')
+      }
+    } catch (error) {
+      console.error('Error creating funnel:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to create funnel' })
+      throw error
     }
-    dispatch({ type: 'ADD_FUNNEL', payload: funnel })
-    return funnel
   }
 
   const updateFunnel = async (id: string, data: any) => {
-    dispatch({ type: 'UPDATE_FUNNEL', payload: { id, data } })
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/funnels/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+      })
+      
+      if (response.ok) {
+        dispatch({ type: 'UPDATE_FUNNEL', payload: { id, data } })
+      } else {
+        throw new Error('Failed to update funnel')
+      }
+    } catch (error) {
+      console.error('Error updating funnel:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to update funnel' })
+      throw error
+    }
   }
 
   const deleteFunnel = async (id: string) => {
-    dispatch({ type: 'DELETE_FUNNEL', payload: id })
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/funnels/${id}`, {
+        method: 'DELETE',
+        headers,
+      })
+      
+      if (response.ok) {
+        dispatch({ type: 'DELETE_FUNNEL', payload: id })
+      } else {
+        throw new Error('Failed to delete funnel')
+      }
+    } catch (error) {
+      console.error('Error deleting funnel:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete funnel' })
+      throw error
+    }
   }
 
   const fetchPages = async (funnelId?: string) => {
-    // Data is already loaded from localStorage
-    return Promise.resolve()
+    try {
+      const headers = await getAuthHeaders()
+      const url = funnelId ? `/api/funnels/${funnelId}/pages` : '/api/pages'
+      const response = await fetch(url, { headers })
+      
+      if (response.ok) {
+        const pages = await response.json()
+        dispatch({ type: 'SET_PAGES', payload: Array.isArray(pages) ? pages : [] })
+      }
+    } catch (error) {
+      console.error('Error fetching pages:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch pages' })
+    }
   }
 
   const createPage = async (funnelId: string, data: any) => {
-    const page = {
-      id: 'page_' + Date.now(),
-      funnelId,
-      name: data.name,
-      type: data.type,
-      elements: [],
-      settings: {
-        title: data.name,
-        description: '',
-        favicon: '',
-        customCSS: '',
-        customJS: '',
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/funnels/${funnelId}/pages`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      })
+      
+      if (response.ok) {
+        const page = await response.json()
+        dispatch({ type: 'ADD_PAGE', payload: page })
+        return page
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to create page')
+      }
+    } catch (error) {
+      console.error('Error creating page:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to create page' })
+      throw error
     }
-    dispatch({ type: 'ADD_PAGE', payload: page })
-    return page
   }
 
   const updatePage = async (id: string, data: any) => {
-    console.log('Updating page:', id, 'with data:', data)
-    dispatch({ type: 'UPDATE_PAGE', payload: { id, data } })
-    
-    // Persist to localStorage immediately
-    setTimeout(() => {
-      const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-      if (state.pages) {
-        const updatedPages = state.pages.map((p: any) =>
-          p.id === id ? { ...p, ...data } : p
-        )
-        state.pages = updatedPages
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-        console.log('Page persisted to localStorage:', id)
+    console.log('📤 Updating page in database:', id)
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/pages/${id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(data),
+      })
+      
+      if (response.ok) {
+        dispatch({ type: 'UPDATE_PAGE', payload: { id, data } })
+        console.log('✅ Page updated in database:', id)
+      } else {
+        throw new Error('Failed to update page')
       }
-    }, 100)
+    } catch (error) {
+      console.error('❌ Error updating page:', error)
+      // Still update local state for offline capability
+      dispatch({ type: 'UPDATE_PAGE', payload: { id, data } })
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to update page in database' })
+    }
   }
 
   const deletePage = async (id: string) => {
-    dispatch({ type: 'DELETE_PAGE', payload: id })
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/pages/${id}`, {
+        method: 'DELETE',
+        headers,
+      })
+      
+      if (response.ok) {
+        dispatch({ type: 'DELETE_PAGE', payload: id })
+      } else {
+        throw new Error('Failed to delete page')
+      }
+    } catch (error) {
+      console.error('Error deleting page:', error)
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete page' })
+      throw error
+    }
   }
 
   const fetchAnalytics = async () => {
